@@ -21,9 +21,21 @@ src/core/        Game logic with no UI or Tauri dependencies
   tsumego.ts       tsumego frame
   models.ts        downloadable KataGo models
   i18n.ts          gettext lookup + Python-style format strings
-src/state/       zustand store with the controller logic (AI turns, teaching, timer, pondering, files),
-                 the user config (defaults.json holds the defaults) and the platform layer (Tauri or browser)
-src/ui/          React components (SVG board, move tree, graph, panels, dialogs)
+src/state/       the app's state and controller logic, the user config (defaults.json holds the defaults) and the
+                 platform layer (Tauri or browser)
+  appState.ts      the zustand store and its types, logging, the status bar, refresh()
+  engineState.ts   starting and restarting KataGo
+  configState.ts   changing and saving the config, player types, recent files
+  uiState.ts       dialogs, the mode tab, coordinates, selecting a region of interest
+  files.ts         new games, loading, saving, the clipboard, unsaved changes and autosave
+  moves.ts         playing, navigating, editing the move tree, notes, insert mode
+  analysis.ts      extra analysis, pondering, PVs, self-play, set up position, tsumego frame
+  trainer.ts       what runs after every change: teaching undos, AI moves, pondering
+  timer.ts         the game clock
+  updates.ts       updates of the app
+  lifecycle.ts     starting the app
+  store.ts         gathers all of the above: the UI and the tests import from here
+src/ui/          React components (SVG board, move tree, graph, panels); src/ui/dialogs has the dialogs
 src/i18n/        translations (gettext .po files, one per language)
 src/assets/      sounds
 src-tauri/       Rust backend: runs KataGo (local process, custom command, or a WebSocket to a remote engine)
@@ -33,6 +45,11 @@ resources/       bundled KataGo binaries (Windows, Linux; macOS is built by scri
                  the default model and the KataGo config
 tests-ts/        unit tests (vitest), golden data generated from the Python implementation, test games
 ```
+
+The board re-renders often while analysis comes in (several times a second while pondering), so its parts that only
+change with the board size (the wood, lines, star points, coordinates and SVG definitions) are memoized components,
+and so are the stones. The move tree draws only the nodes and lines near its visible part, so a long game with many
+variations stays cheap to re-render.
 
 The Rust side deliberately knows nothing about go: it only owns the engine connection. KataGo's analysis engine
 speaks JSON lines over stdin/stdout (or over a WebSocket for a remote engine), so the TypeScript `KataGoEngine`
