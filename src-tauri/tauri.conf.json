@@ -75,7 +75,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJFRkVDM0JCRjQ1RUE0REUKUldUZXBGNzB1OFArTGhhOWdUaDE0Wm93blFkOUc5QWkzV3V0MGJEUmlLNWFWZHhqSDdiN05tKzYK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMxMDA3NkVEMTE1NDhGQjQKUldTMGoxUVI3WFlBTVI3eWE2bVJiRXFrdWdUUlA4d2tsMTZqbUNQOVVQT2UyTkZVQ0xQZGhwN3YK",
       "endpoints": [
         "https://github.com/yongjer/katraineo/releases/latest/download/latest.json"
       ],

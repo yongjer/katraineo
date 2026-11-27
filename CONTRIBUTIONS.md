@@ -1,13 +1,12 @@
 # Contributing
 
 If you are a new contributor wanting to make a larger contribution,
- please first discuss the change you wish to make via
- an issue or [Discord](https://discord.gg/AjTPFpN) before making a pull request.
+please first discuss the change you wish to make via a GitHub issue before making a pull request.
 
 ## Code contributions
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for how the app is organized, built and tested.
-Run `npm run typecheck` and `npm test` before sending a pull request.
+Run `npm run typecheck`, `npm run lint`, `npm run format:check`, and `npm test` before sending a pull request.
 
 ## Translations
 
@@ -26,13 +25,17 @@ Adding a translation requires making a new `.po` file with entries for that lang
     * The information at the top of the file should also not be translated.
 * Add the language to `LANGUAGES` in `src/ui/i18nLoader.ts`.
 
-# Contributors 
+# Contributors
 
-## Primary author and project maintainer:
+## Katraineo maintainer
+
+[YONG JER CHUANG (@yongjer)](https://github.com/yongjer)
+
+## Original KaTrain author
 
 [Sander Land](https://github.com/sanderland/)
 
-## Contributors
+## Original KaTrain contributors
 
 Many thanks to these additional authors:
 

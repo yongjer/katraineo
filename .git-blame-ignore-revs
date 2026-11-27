@@ -3,10 +3,10 @@
 # (GitHub uses this file on its own.)
 
 # Format the code with Prettier
-01bfca1ead0e7dfcb23a42a63ff7a694084c096a
+d82145aeec8d7755d0fb2e2e619d100f3d76c4c1
 
 # Format the end-to-end test with Prettier
-68508d23942437846ae487710f49a9047ac55cb1
+4416018305189320faba2dbccbdfd9b0b4aa9ab0
 
 # Format the Rust code with rustfmt
-56d28d86a3af778009912a6495d31dbe149b5aff
+ff87d734416480fa5cf27484cc474e86b4680e10
