@@ -117,7 +117,7 @@ export function setNote(note: string) {
 
 export function toggleInsertMode() {
   const game = get().game;
-  if (!game) return;
+  if (!game || get().setupTool) return;
   game.setInsertMode("toggle");
   if (game.insertMode && get().mode !== MODE_ANALYZE) set({ mode: MODE_ANALYZE });
   refresh();

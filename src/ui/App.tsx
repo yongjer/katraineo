@@ -19,6 +19,7 @@ import { Board } from "./Board";
 import { Dialogs } from "./Dialogs";
 import { Graph } from "./Graph";
 import { MoveTree } from "./MoveTree";
+import { SetupToolbar } from "./SetupToolbar";
 import { handleKeyDown, useShortcutLabels } from "./shortcuts";
 import { useAppearance } from "./theme";
 import { TimerPanel } from "./Timer";
@@ -75,6 +76,7 @@ export function App() {
       {focusMode < 2 && <TopBar />}
       <main className="main">
         <section className="board-area">
+          <SetupToolbar />
           <Board />
         </section>
         {focusMode === 0 && (

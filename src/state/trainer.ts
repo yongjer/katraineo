@@ -47,6 +47,7 @@ function updateState() {
     mode === MODE_PLAY &&
     !aiThinking &&
     get().dialog === null &&
+    get().setupTool === null &&
     cn.analysisComplete &&
     players[cn.nextPlayer].type === PLAYER_AI &&
     !cn.children.length &&

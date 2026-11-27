@@ -145,6 +145,7 @@ Deep analysis & study actions (*Analysis Options*):
 | <kbd>Enter</kbd> | AI move | Play one AI move for the current turn regardless of player settings. |
 | <kbd>F2</kbd> | Deeper full game analysis | Re-analyze the whole game, a move range, or mistakes only at higher visits. |
 | <kbd>F3</kbd> | Performance report | Accuracy, mean point loss, AI agreement, and mistake histogram by phase (opening / midgame / endgame). |
+| <kbd>u</kbd> | Edit position | Add or remove stones (SGF `AB`/`AW`/`AE`), set who plays next, and mark points with triangles, squares, circles, crosses and labels. Set up a problem on an empty board, or change a position in the middle of a game: the stones go into a new node after the move. |
 | <kbd>F10</kbd> | Tsumego frame | Surround a corner/side life-and-death position with a balanced frame for accurate local reading. |
 | <kbd>Escape</kbd> | Stop all analysis | Cancel queued and continuous analysis. |
 
@@ -168,6 +169,7 @@ Deep analysis & study actions (*Analysis Options*):
 | <kbd>n</kbd> | Jump to one move before the next human mistake (<kbd>Shift</kbd>: previous mistake) |
 | Scroll over board | Step forward / backward |
 | Middle-click a top move | Add its principal variation to the move tree |
+| Editing the position (<kbd>u</kbd>) | Click puts the tool's stone or mark on a point (again: takes it off); right-click puts the other color, or erases the mark; <kbd>1</kbd>–<kbd>9</kbd> choose the tool; <kbd>Esc</kbd> is done |
 | Right-click in move tree | Delete, promote to main branch, collapse, or prune |
 | Double-click / drop a file | Open `.sgf`, `.gib`, or `.ngf` game records directly in Katraineo |
 | <kbd>Ctrl</kbd> + <kbd>v</kbd> | Import an SGF (or an HTTP/HTTPS link to one) from the clipboard |

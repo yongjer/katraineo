@@ -10,6 +10,7 @@ import {
   PROGRAM_NAME,
   type Player,
 } from "./constants";
+import { Board, IllegalMoveException, suicideAllowed } from "./board";
 import { getRules, type KataGoEngine, type Rules } from "./engine";
 import { GameNode, type SgfSaveOptions } from "./gameNode";
 import { t, tf } from "./i18n";
@@ -17,7 +18,7 @@ import { Move, type Coords } from "./move";
 import { writeSgf } from "./sgf";
 import { varToGrid, weightedSelectionWithoutReplacement } from "./utils";
 
-export class IllegalMoveException extends Error {}
+export { IllegalMoveException };
 
 export type StatusLevel = "analysis" | "info" | "teaching" | "error";
 
@@ -75,11 +76,8 @@ export class Game {
   /** cleared when the app moves on to another game, so background work (self-play) stops */
   active = true;
 
-  // board state: board[y][x] = chain id or -1
-  board: number[][] = [];
-  chains: Move[][] = [];
-  prisoners: Move[] = [];
-  lastCapture: Move[] = [];
+  /** the stones at the current node */
+  private position!: Board;
 
   constructor(
     private host: GameHost,
@@ -127,101 +125,44 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- board state
-  private initState() {
-    const [sx, sy] = this.boardSize;
-    this.board = Array.from({ length: sy }, () => new Array<number>(sx).fill(-1));
-    this.chains = [];
-    this.prisoners = [];
-    this.lastCapture = [];
+  private newBoard(): Board {
+    return new Board(this.boardSize, () => suicideAllowed(this.rules));
   }
 
+  /** The position at the current node, replayed from the root. */
   private calculateGroups() {
-    this.initState();
+    this.position = this.newBoard();
     try {
-      for (const node of this.currentNode.nodesFromRoot) {
-        for (const m of node.moveWithPlacements) this.validateMoveAndUpdateChains(m, true); // ko unknown when replaying
-        const clear = node.clearPlacements;
-        if (clear.length) {
-          // handle AE by replaying all stones that remain on an empty board
-          const clearKeys = new Set(clear.filter((c) => c.coords).map((c) => `${c.coords![0]},${c.coords![1]}`));
-          const stones = this.chains.flat().filter((m) => !clearKeys.has(`${m.coords![0]},${m.coords![1]}`));
-          this.initState();
-          for (const m of stones) this.validateMoveAndUpdateChains(m, true);
-        }
-      }
+      for (const node of this.currentNode.nodesFromRoot) this.position.applyNode(node);
     } catch (e) {
       if (e instanceof IllegalMoveException) throw new Error(`Unexpected illegal move (${e.message})`);
       throw e;
     }
   }
 
-  private validateMoveAndUpdateChains(move: Move, ignoreKo: boolean) {
-    const [sx, sy] = this.boardSize;
-    const neighbours = (moves: Move[]): Set<number> => {
-      const out = new Set<number>();
-      for (const m of moves) {
-        const [x, y] = m.coords!;
-        for (const [dy, dx] of [
-          [-1, 0],
-          [1, 0],
-          [0, -1],
-          [0, 1],
-        ]) {
-          if (x + dx >= 0 && x + dx < sx && y + dy >= 0 && y + dy < sy) out.add(this.board[y + dy][x + dx]);
-        }
-      }
-      return out;
-    };
-
-    const koOrSnapback = this.lastCapture.length === 1 && this.lastCapture[0].equals(move);
-    this.lastCapture = [];
-    if (move.isPass) return;
-    const [mx, my] = move.coords!;
-    if (this.board[my][mx] !== -1) throw new IllegalMoveException("Space occupied");
-
-    // merge chains connected by this move, or create a new one
-    const nbChains = [...neighbours([move])].filter((c) => c >= 0 && this.chains[c][0].player === move.player);
-    let thisChain: number;
-    if (nbChains.length) {
-      thisChain = nbChains[0];
-      const others = new Set(nbChains);
-      for (const line of this.board) for (let x = 0; x < line.length; x++) if (others.has(line[x])) line[x] = thisChain;
-      for (const oc of nbChains.slice(1)) {
-        this.chains[thisChain].push(...this.chains[oc]);
-        this.chains[oc] = [];
-      }
-      this.chains[thisChain].push(move);
-    } else {
-      thisChain = this.chains.length;
-      this.chains.push([move]);
+  /** Whether every line through the node can still be replayed, e.g. after its setup stones changed. */
+  canReplay(node: GameNode): boolean {
+    const leaves = node.nodesInTree.filter((n) => !n.children.length);
+    try {
+      for (const leaf of leaves) Board.after(this.boardSize, leaf.nodesFromRoot, () => suicideAllowed(this.rules));
+      return true;
+    } catch (e) {
+      if (e instanceof IllegalMoveException) return false;
+      throw e;
     }
-    this.board[my][mx] = thisChain;
+  }
 
-    // captures
-    const oppChains = [...neighbours([move])].filter((c) => c >= 0 && this.chains[c][0].player !== move.player);
-    for (const c of oppChains) {
-      if (!neighbours(this.chains[c]).has(-1)) {
-        this.lastCapture.push(...this.chains[c]);
-        for (const om of this.chains[c]) this.board[om.coords![1]][om.coords![0]] = -1;
-        this.chains[c] = [];
-      }
-    }
-    if (koOrSnapback && this.lastCapture.length === 1 && !ignoreKo) throw new IllegalMoveException("Ko");
-    this.prisoners.push(...this.lastCapture);
-
-    // suicide
-    if (!neighbours(this.chains[thisChain]).has(-1)) {
-      const rules = this.rules;
-      if (this.chains[thisChain].length === 1) throw new IllegalMoveException("Single stone suicide");
-      const suicideAllowed =
-        (typeof rules === "string" && ["tromp-taylor", "new zealand"].includes(rules)) ||
-        (typeof rules === "object" && Boolean(rules.suicide));
-      if (!suicideAllowed) throw new IllegalMoveException("Suicide");
-      this.lastCapture.push(...this.chains[thisChain]);
-      for (const om of this.chains[thisChain]) this.board[om.coords![1]][om.coords![0]] = -1;
-      this.chains[thisChain] = [];
-      this.prisoners.push(...this.lastCapture);
-    }
+  get board(): number[][] {
+    return this.position.board;
+  }
+  get chains(): Move[][] {
+    return this.position.chains;
+  }
+  get prisoners(): Move[] {
+    return this.position.prisoners;
+  }
+  get lastCapture(): Move[] {
+    return this.position.lastCapture;
   }
 
   get boardSize(): [number, number] {
@@ -234,12 +175,12 @@ export class Game {
     return getRules(this.root.ruleset);
   }
   get stones(): Move[] {
-    return this.chains.flat();
+    return this.position.stones;
   }
 
   /** player at each point, indexed [y][x]. */
   get stoneGrid(): (Player | null)[][] {
-    return this.board.map((line) => line.map((c) => (c >= 0 ? this.chains[c][0].player : null)));
+    return this.position.stoneGrid;
   }
 
   get prisonerCount(): Record<Player, number> {
@@ -274,7 +215,7 @@ export class Game {
     }
     if (opts.expectedNode && this.currentNode !== opts.expectedNode) return null;
     try {
-      this.validateMoveAndUpdateChains(move, opts.ignoreKo ?? false);
+      this.position.play(move, opts.ignoreKo ?? false);
     } catch (e) {
       this.calculateGroups(); // roll the half-applied move back off the board
       throw e;
@@ -454,7 +395,7 @@ export class Game {
       for (;;) {
         for (const m of copyFrom.moveWithPlacements) {
           if (alreadyInserted.some((a) => a.equals(m))) continue;
-          this.validateMoveAndUpdateChains(m, true);
+          this.position.play(m, true);
           const props = Object.fromEntries([...copyFrom.properties].map(([k, v]) => [k, [...v]]));
           copyTo = new GameNode(copyTo, props);
           numCopied++;
@@ -674,6 +615,16 @@ export class Game {
         node.clearAnalysis();
         this.analyze(node, { priority, analyzeFast });
       }
+    }
+  }
+
+  /** Forget the analysis of these nodes and analyze them again, e.g. after their position was edited. */
+  reanalyze(nodes: GameNode[]) {
+    for (const node of nodes) {
+      this.engine?.terminateQueries(node);
+      node.clearAnalysis();
+      if (node === this.currentNode) this.analyze(node);
+      else this.analyze(node, { priority: PRIORITY_GAME_ANALYSIS, analyzeFast: true });
     }
   }
 

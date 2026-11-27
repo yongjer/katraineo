@@ -87,6 +87,19 @@ export function analysisDumps(analysis: NodeAnalysis): string[] {
   return [ownershipData, policyData, mainData].map((d) => base64Encode(gzipSync(d)));
 }
 
+/** The markup shapes on points: triangle, square, circle and cross. */
+export const MARKUP_SHAPES = ["TR", "SQ", "CR", "MA"] as const;
+export type MarkupKind = (typeof MARKUP_SHAPES)[number] | "LB";
+export interface Markup {
+  kind: MarkupKind;
+  coords: Coords;
+  /** the text of a label (LB) */
+  label?: string;
+}
+
+/** The player of an SGF PL value. */
+const playerOf = (value: string): Player => (value.toUpperCase().trim() === "B" ? "B" : "W");
+
 let nextNodeId = 1;
 
 export class GameNode {
@@ -283,32 +296,87 @@ export class GameNode {
     return this.movesCache;
   }
 
-  private expandedPlacements(player: Player | null): Move[] {
-    const placements = this.getListProperty("A" + (player ?? "E")) ?? [];
-    if (!placements.length) return [];
+  /** The points of a point list property (AB, AW, AE, TR, SQ, CR, MA), with compressed ranges like "aa:cc" expanded. */
+  pointList(property: string): Coords[] {
+    const values = this.getListProperty(property) ?? [];
+    if (!values.length) return [];
     const bs = this.boardSize;
-    // AE (clear) placements have no meaningful player; only their coordinates are used.
-    const pl: Player = player ?? "B";
-    if (!placements.some((p) => p.includes(":"))) return placements.map((p) => Move.fromSgf(p, bs, pl));
-    const seen = new Map<string, Move>();
-    const add = (c: Coords) => seen.set(`${c[0]},${c[1]}`, new Move(c, pl));
-    for (const p of placements) {
+    const seen = new Map<string, Coords>();
+    const add = (c: Coords) => seen.set(`${c[0]},${c[1]}`, c);
+    for (const p of values) {
       if (!p.includes(":")) {
         const c = Move.fromSgf(p, bs).coords;
-        if (c) add(c);
+        if (c && c[0] >= 0 && c[0] < bs[0] && c[1] >= 0 && c[1] < bs[1]) add(c);
         continue;
       }
       const [from, to] = p
         .split(":")
         .slice(0, 2)
         .map((c) => Move.fromSgf(c, bs));
-      for (let x = from.coords![0]; x <= to.coords![0]; x++) {
-        for (let y = to.coords![1]; y <= from.coords![1]; y++) {
+      if (!from.coords || !to.coords) continue;
+      const [x1, x2] = [Math.min(from.coords[0], to.coords[0]), Math.max(from.coords[0], to.coords[0])];
+      const [y1, y2] = [Math.min(from.coords[1], to.coords[1]), Math.max(from.coords[1], to.coords[1])];
+      for (let x = x1; x <= x2; x++) {
+        for (let y = y1; y <= y2; y++) {
           if (x >= 0 && x < bs[0] && y >= 0 && y < bs[1]) add([x, y]);
         }
       }
     }
     return [...seen.values()];
+  }
+
+  /** Set a point list property to these points, or remove it when there are none. */
+  setPointList(property: string, points: Coords[]) {
+    if (!points.length) this.clearProperty(property);
+    else
+      this.setProperty(
+        property,
+        points.map((c) => new Move(c).sgf(this.boardSize)),
+      );
+  }
+
+  private expandedPlacements(player: Player | null): Move[] {
+    // AE (clear) placements have no meaningful player; only their coordinates are used.
+    const pl: Player = player ?? "B";
+    return this.pointList("A" + (player ?? "E")).map((c) => new Move(c, pl));
+  }
+
+  /** The labels (LB) on this node's position. */
+  get labels(): { coords: Coords; text: string }[] {
+    const bs = this.boardSize;
+    const out: { coords: Coords; text: string }[] = [];
+    for (const v of this.getListProperty("LB") ?? []) {
+      const i = v.indexOf(":");
+      if (i < 0) continue;
+      const c = Move.fromSgf(v.slice(0, i), bs).coords;
+      if (c && c[0] >= 0 && c[0] < bs[0] && c[1] >= 0 && c[1] < bs[1]) out.push({ coords: c, text: v.slice(i + 1) });
+    }
+    return out;
+  }
+
+  setLabels(labels: { coords: Coords; text: string }[]) {
+    if (!labels.length) this.clearProperty("LB");
+    else
+      this.setProperty(
+        "LB",
+        labels.map((l) => `${new Move(l.coords).sgf(this.boardSize)}:${l.text}`),
+      );
+  }
+
+  /** The board markup of this node (SGF TR, SQ, CR, MA and LB). */
+  get markup(): Markup[] {
+    const out: Markup[] = [];
+    for (const kind of MARKUP_SHAPES) for (const coords of this.pointList(kind)) out.push({ kind, coords });
+    for (const { coords, text } of this.labels) out.push({ kind: "LB", coords, label: text });
+    return out;
+  }
+
+  /** A node that sets up stones or the player to move, but plays no move. */
+  get isSetup(): boolean {
+    return (
+      !this.moves.length &&
+      (this.hasProperty("AB") || this.hasProperty("AW") || this.hasProperty("AE") || this.hasProperty("PL"))
+    );
   }
 
   get placements(): Move[] {
@@ -335,7 +403,7 @@ export class GameNode {
 
   get initialPlayer(): Player {
     const root = this.root;
-    if (root.hasProperty("PL")) return root.getProperty("PL", "").toUpperCase().trim() === "B" ? "B" : "W";
+    if (root.hasProperty("PL")) return playerOf(root.getProperty("PL", ""));
     for (const child of root.children) {
       for (const color of Move.PLAYERS) if (child.hasProperty(color)) return color;
     }
@@ -347,6 +415,7 @@ export class GameNode {
     if (this.isRoot) return this.initialPlayer;
     if (this.hasProperty("B")) return "W";
     if (this.hasProperty("W")) return "B";
+    if (this.hasProperty("PL")) return playerOf(this.getProperty("PL", ""));
     return this.parent!.nextPlayer;
   }
 

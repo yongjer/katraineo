@@ -11,11 +11,15 @@ import { MODE_ANALYZE, MODE_PLAY } from "../core/constants";
 import { t } from "../core/i18n";
 import type { AnalysisToggles } from "../state/config";
 import {
+  SETUP_TOOLS,
   aiMoveNow,
   analyzeExtra,
   copySgf,
   cycleFocusMode,
   editTree,
+  finishSetup,
+  setSetupTool,
+  toggleSetup,
   findMistake,
   loadGame,
   openDialog,
@@ -196,6 +200,7 @@ export const ACTIONS: ShortcutAction[] = [
   { id: "main-branch", label: "Make Main Branch", group: "edit", defaults: ["PageUp"], run: () => editTree("main") },
   { id: "collapse", label: "Toggle Collapse Branch", group: "edit", defaults: ["C"], run: () => editTree("collapse") },
   { id: "insert", label: "analysis:insert", group: "edit", defaults: ["I"], run: toggleInsertMode },
+  { id: "setup", label: "setup:title", group: "edit", defaults: ["U"], run: toggleSetup },
 ];
 
 export const SHORTCUT_GROUPS: ShortcutAction["group"][] = ["file", "navigate", "analyze", "view", "edit"];
@@ -355,6 +360,16 @@ export function handleKeyDown(e: KeyboardEvent) {
   if (s.dialog) return; // the dialog has the keyboard: Escape closes it (see App)
   const combo = comboFromEvent(e);
   if (!combo) return;
+  if (s.setupTool) {
+    // editing the position: 1 to 9 choose a tool, Escape is done
+    const tool = /^[1-9]$/.test(combo) ? SETUP_TOOLS[Number(combo) - 1] : null;
+    if (tool || combo === "Escape") {
+      e.preventDefault();
+      if (tool) setSetupTool(tool);
+      else finishSetup();
+      return;
+    }
+  }
   const action = actionForCombo(resolveBindings(s.config.shortcuts), combo);
   if (!action) return;
   e.preventDefault();

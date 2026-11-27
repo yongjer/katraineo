@@ -14,6 +14,7 @@ import {
   pasteSgf,
   selfplayToEnd,
   toggleInsertMode,
+  toggleSetup,
   findMistake,
   getEngine,
   loadGame,
@@ -168,6 +169,7 @@ export function TopBar() {
             <MenuItem label={t("analysis:aimove")} shortcut={key("ai-move")} onClick={aiMoveNow} />
             <MenuItem label={t("analysis:playtoend")} shortcut={key("play-to-end")} onClick={selfplayToEnd} />
             <MenuItem label={t("analysis:insert")} shortcut={key("insert")} onClick={toggleInsertMode} />
+            <MenuItem label={t("setup:title")} shortcut={key("setup")} onClick={toggleSetup} />
             <MenuItem
               label={t("analysis:tsumegoframe")}
               shortcut={key("tsumego-frame")}

@@ -318,6 +318,7 @@ kbd {
   flex: 1;
   min-width: 0;
   display: flex;
+  flex-direction: column;
   padding: 8px;
 }
 
@@ -429,6 +430,40 @@ kbd {
 
 .stone-number.on-W {
   fill: #0d0d0d;
+}
+
+/* SGF markup: dark on the board and white stones, light on black stones */
+.markup {
+  fill: none;
+  stroke-width: 0.06;
+  stroke: var(--board-line);
+}
+
+.markup.on-W {
+  stroke: #0d0d0d;
+}
+
+.markup.on-B {
+  stroke: #f2f2f2;
+}
+
+.markup-label-bg {
+  fill: var(--board-approx);
+}
+
+.markup-label {
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: 600;
+  fill: var(--board-line);
+}
+
+.markup-label.on-W {
+  fill: #0d0d0d;
+}
+
+.markup-label.on-B {
+  fill: #f2f2f2;
 }
 
 .hint-text {
@@ -1428,6 +1463,92 @@ button.primary:disabled {
 .focus-controls .icon-button {
   background: var(--box);
   border: 1px solid var(--box-light);
+}
+
+/* ------------------------------------------------------------ position editor */
+.board.editing {
+  cursor: crosshair;
+}
+
+.setup-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  padding: 0 4px 6px;
+}
+
+.setup-title {
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.setup-tools {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius);
+  background: var(--box);
+}
+
+.setup-tool {
+  width: 30px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+}
+
+.setup-tool:hover {
+  background: var(--box-light);
+}
+
+.setup-tool.active {
+  background: var(--accent);
+  color: #1b2430;
+}
+
+.setup-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.setup-hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tool-stone-B {
+  fill: #111;
+  stroke: #888;
+  stroke-width: 1;
+}
+
+.tool-stone-W {
+  fill: #f2f2f2;
+  stroke: #888;
+  stroke-width: 1;
+}
+
+.tool-shape {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.tool-shape.dashed {
+  stroke-width: 1;
+  stroke-dasharray: 2 1.6;
+}
+
+.tool-text {
+  fill: currentColor;
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
 }
 
 /* ------------------------------------------------------------ keyboard shortcuts dialog */

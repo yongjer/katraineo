@@ -12,11 +12,11 @@ import {
   TOP_MOVE_WINRATE,
   type Player,
 } from "../core/constants";
-import { GameNode, type CandidateMove } from "../core/gameNode";
+import { GameNode, type CandidateMove, type Markup } from "../core/gameNode";
 import { t } from "../core/i18n";
 import { Move, type Coords } from "../core/move";
 import { formatVisits, varToGrid } from "../core/utils";
-import { addPvToTree, finishRegionSelect, playAt, useStore } from "../state/store";
+import { addPvToTree, editAt, finishRegionSelect, playAt, useStore } from "../state/store";
 import type { AppearanceSettings } from "../state/config";
 import { EVAL_COLORS, THEME, appearanceOf, evalColor, gtpColumn } from "./theme";
 import { woodTexture } from "./woodTexture";
@@ -48,6 +48,7 @@ export function Board() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<Coords | null>(null);
   const selecting = useStore((s) => s.selectingRegion);
+  const setupTool = useStore((s) => s.setupTool);
   const showCoords = useStore((s) => s.showCoords);
   const { board: boardStyle, stones: stoneStyle } = appearanceOf(useStore((s) => s.config.ui.appearance));
   const shell = stoneStyle === "slate-shell";
@@ -179,6 +180,9 @@ export function Board() {
       B: trainer.eval_show_ai || config.ui.players.B.type !== PLAYER_AI,
       W: trainer.eval_show_ai || config.ui.players.W.type !== PLAYER_AI,
     };
+    const markup = cn.markup;
+    // no move marker, number or evaluation dot under a mark
+    const marked = new Set(markup.map((m) => `${m.coords[0]},${m.coords[1]}`));
     const drawn = new Set<string>();
     const stones: ReactNode[] = [];
     const nodes = cn.nodesFromRoot.reverse();
@@ -197,7 +201,7 @@ export function Board() {
         if (stoneGrid[m.coords[1]][m.coords[0]] !== m.player || drawn.has(key)) continue;
         drawn.add(key);
         const isPlacement = placements.includes(m);
-        const evalOn = toggles.eval && showDotsFor[m.player] && i < trainer.eval_on_show_last;
+        const evalOn = toggles.eval && showDotsFor[m.player] && i < trainer.eval_on_show_last && !marked.has(key);
         const evalCol = evalOn && pl !== null ? evalColor(pl, trainer.eval_thresholds, theme, trainer.show_dots) : null;
         const newMove = cn.move?.coords && m.sameCoords(cn.move) && !cn.ownership;
         const own = ownershipGrid && !newMove ? ownershipGrid[m.coords[1]][m.coords[0]] : null;
@@ -210,8 +214,8 @@ export function Board() {
             ownership={own}
             evalColor={evalCol}
             evalScale={evalScale}
-            last={i === 0 && !isPlacement}
-            number={config.trainer.show_move_numbers ? node.depth : null}
+            last={i === 0 && !isPlacement && !marked.has(key)}
+            number={config.trainer.show_move_numbers && !marked.has(key) ? node.depth : null}
             shell={shell}
           />,
         );
@@ -339,6 +343,23 @@ export function Board() {
       );
     }
 
+    // ---------------------------------------------------- markup (SGF TR, SQ, CR, MA and LB)
+    if (markup.length) {
+      layers.push(
+        <g key="markup">
+          {markup.map((m) => (
+            <MarkupMark
+              key={`${m.kind}${m.coords[0]},${m.coords[1]}`}
+              mark={m}
+              x={px(m.coords[0])}
+              y={py(m.coords[1])}
+              on={stoneGrid[m.coords[1]][m.coords[0]]}
+            />
+          ))}
+        </g>,
+      );
+    }
+
     return { layers, hintTargets, sx, sy, py, stoneGrid, endResult, nextPlayer };
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- the game changes in place: tick counts its changes
   }, [game, tick, toggles, trainer, theme, config.ui.players, config.trainer.show_move_numbers, teachingStatus, shell]);
@@ -348,10 +369,17 @@ export function Board() {
   const cn = game.currentNode;
 
   // hover: PV preview over a hint / next move, otherwise a ghost stone
-  const hoverTarget = hover && hintTargets.find((h) => h.coords[0] === hover[0] && h.coords[1] === hover[1]);
+  // (while editing the position: the stone the tool puts down)
+  const hoverTarget =
+    !setupTool && hover && hintTargets.find((h) => h.coords[0] === hover[0] && h.coords[1] === hover[1]);
   const pv: PvOverlay | null = hoverTarget ? { moves: hoverTarget.pv, startPlayer: nextPlayer } : null;
-  const canPlay = !endResult && !(mode === MODE_PLAY && aiThinking) && !selecting;
-  const ghost = !pv && hover && canPlay && !stoneGrid[hover[1]][hover[0]] ? hover : null;
+  const canPlay = !endResult && !(mode === MODE_PLAY && aiThinking) && !selecting && !setupTool;
+  const ghostPlayer: Player | null = setupTool
+    ? setupTool === "B" || setupTool === "W"
+      ? setupTool
+      : null
+    : nextPlayer;
+  const ghost = !pv && hover && ghostPlayer && (canPlay || setupTool) && !stoneGrid[hover[1]][hover[0]] ? hover : null;
 
   const toBoard = (e: React.MouseEvent): Coords | null => {
     const svg = svgRef.current;
@@ -375,7 +403,7 @@ export function Board() {
         ref={svgRef}
         viewBox={`-1.1 -1.1 ${sx + 1.2} ${sy + 1.2}`}
         preserveAspectRatio="xMidYMid meet"
-        className={`board ${selecting ? "selecting" : ""}`}
+        className={`board ${selecting ? "selecting" : ""} ${setupTool ? "editing" : ""}`}
         onMouseDown={(e) => {
           // WebKit may send no click after the drag that selects a region: then this one is a new click to keep
           justSelected.current = false;
@@ -408,14 +436,25 @@ export function Board() {
             return;
           }
           const c = toBoard(e);
-          if (c && canPlay && !stoneGrid[c[1]][c[0]]) playAt(c);
+          if (setupTool) {
+            if (c) editAt(c);
+          } else if (c && canPlay && !stoneGrid[c[1]][c[0]]) playAt(c);
+        }}
+        onContextMenu={(e) => {
+          if (!setupTool) return;
+          // editing: the other color, or erase the markup
+          e.preventDefault();
+          const c = toBoard(e);
+          if (c) editAt(c, true);
         }}
       >
         <BoardDefs sx={sx} sy={sy} stones={stoneStyle} />
         <BoardGrid sx={sx} sy={sy} showCoords={showCoords} inserting={game.insertMode} wood={boardStyle === "wood"} />
         {layers}
         {pv && <PvStones pv={pv} py={py} shell={shell} />}
-        {ghost && <Stone x={ghost[0]} y={py(ghost[1])} player={nextPlayer} opacity={THEME.ghostAlpha} shell={shell} />}
+        {ghost && ghostPlayer && (
+          <Stone x={ghost[0]} y={py(ghost[1])} player={ghostPlayer} opacity={THEME.ghostAlpha} shell={shell} />
+        )}
         {box && (
           <rect
             x={Math.min(box[0], box[1]) - 0.5}
@@ -678,6 +717,40 @@ function StoneBody({ x, y, player, shell }: { x: number; y: number; player: Play
       {shell && player === "W" && <circle cx={x} cy={y} r={STONE_R} fill="url(#shell-grain)" />}
     </>
   );
+}
+
+/** A mark (triangle, square, circle, cross) or label on a point, in a color that stands out on what is there. */
+function MarkupMark({ mark, x, y, on }: { mark: Markup; x: number; y: number; on: Player | null }) {
+  const cls = `markup on-${on ?? "empty"}`;
+  switch (mark.kind) {
+    case "TR": {
+      const r = 0.29;
+      const points = [-90, 30, 150]
+        .map((a) => (a * Math.PI) / 180)
+        .map((a) => `${(x + r * Math.cos(a)).toFixed(3)},${(y + 0.04 + r * Math.sin(a)).toFixed(3)}`);
+      return <polygon points={points.join(" ")} className={cls} />;
+    }
+    case "SQ":
+      return <rect x={x - 0.2} y={y - 0.2} width={0.4} height={0.4} className={cls} />;
+    case "CR":
+      return <circle cx={x} cy={y} r={0.23} className={cls} />;
+    case "MA": {
+      const d = 0.19;
+      return <path d={`M${x - d},${y - d}L${x + d},${y + d}M${x + d},${y - d}L${x - d},${y + d}`} className={cls} />;
+    }
+    case "LB": {
+      const text = mark.label ?? "";
+      const size = Math.min(0.6, 1.1 / Math.max(1, text.length));
+      return (
+        <g>
+          {!on && <circle cx={x} cy={y} r={0.38} className="markup-label-bg" />}
+          <text x={x} y={y} className={`markup-label on-${on ?? "empty"}`} style={{ fontSize: `${size}px` }}>
+            {text}
+          </text>
+        </g>
+      );
+    }
+  }
 }
 
 function PvStones({ pv, py, shell }: { pv: PvOverlay; py: (y: number) => number; shell: boolean }) {
