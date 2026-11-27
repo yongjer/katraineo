@@ -168,7 +168,9 @@ Deep analysis & study actions (*Analysis Options*):
 | <kbd>b</kbd> | Jump back to previous branch point (<kbd>Shift</kbd>: back to main branch) |
 | <kbd>n</kbd> | Jump to one move before the next human mistake (<kbd>Shift</kbd>: previous mistake) |
 | Scroll over board | Step forward / backward |
-| Middle-click a top move | Add its principal variation to the move tree |
+| Hover a top move or next move | Preview its principal variation; scroll (mouse wheel or touchpad) or <kbd>,</kbd> / <kbd>.</kbd> to show fewer or more of its moves |
+| <kbd>Shift</kbd> + click / middle-click a top move | Add its principal variation, as far as it is shown, to the move tree |
+| Right-click a top move | Add its variation (as shown, or all of it) to the move tree, or play the move |
 | Editing the position (<kbd>u</kbd>) | Click puts the tool's stone or mark on a point (again: takes it off); right-click puts the other color, or erases the mark; <kbd>1</kbd>–<kbd>9</kbd> choose the tool; <kbd>Esc</kbd> is done |
 | Right-click in move tree | Delete, promote to main branch, collapse, or prune |
 | Double-click / drop a file | Open `.sgf`, `.gib`, or `.ngf` game records directly in Katraineo |

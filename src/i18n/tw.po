@@ -1463,3 +1463,35 @@ msgstr "無法這樣擺：棋局中之後的某一手會變成不合法。"
 
 msgid "setup:not-in-insert-mode"
 msgstr "請先結束插入模式（i），再編輯局面。"
+
+#. while the variation of a top move or next move is shown on the board
+msgid "pv:shown"
+msgstr "{shown} / {total} 手"
+
+#. followed by the keys for fewer and more moves (, and .)
+msgid "pv:hint-depth"
+msgstr "增減手數：捲動或按"
+
+msgid "pv:hint-add"
+msgstr "Shift+點擊：加入棋譜"
+
+#. menu of a top move or next move (right click)
+msgid "pv:add"
+msgstr "將 {moves} 手加入棋譜"
+
+msgid "pv:add-one"
+msgstr "將這一手加入棋譜"
+
+msgid "pv:shift-click"
+msgstr "Shift+點擊"
+
+msgid "pv:play"
+msgstr "下這一手"
+
+#. keyboard shortcut
+msgid "pv:shorter"
+msgstr "變化少顯示一手"
+
+#. keyboard shortcut
+msgid "pv:longer"
+msgstr "變化多顯示一手"

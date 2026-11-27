@@ -1532,3 +1532,35 @@ msgstr "Not possible: a later move in the game would no longer be legal."
 
 msgid "setup:not-in-insert-mode"
 msgstr "Finish inserting moves (i) before editing the position."
+
+#. while the variation of a top move or next move is shown on the board
+msgid "pv:shown"
+msgstr "{shown} / {total} moves"
+
+#. followed by the keys for fewer and more moves (, and .)
+msgid "pv:hint-depth"
+msgstr "Fewer or more: scroll or"
+
+msgid "pv:hint-add"
+msgstr "Shift+Click: add to the move tree"
+
+#. menu of a top move or next move (right click)
+msgid "pv:add"
+msgstr "Add {moves} moves to the move tree"
+
+msgid "pv:add-one"
+msgstr "Add this move to the move tree"
+
+msgid "pv:shift-click"
+msgstr "Shift+Click"
+
+msgid "pv:play"
+msgstr "Play this move"
+
+#. keyboard shortcut
+msgid "pv:shorter"
+msgstr "Show fewer moves of the variation"
+
+#. keyboard shortcut
+msgid "pv:longer"
+msgstr "Show more moves of the variation"

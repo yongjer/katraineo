@@ -7,6 +7,7 @@
 // another character, but e.code is still "KeyI".
 
 import { useMemo } from "react";
+import { stepPvDepth } from "./pvPreview";
 import { MODE_ANALYZE, MODE_PLAY } from "../core/constants";
 import { t } from "../core/i18n";
 import type { AnalysisToggles } from "../state/config";
@@ -158,6 +159,14 @@ export const ACTIONS: ShortcutAction[] = [
   { id: "report", label: "analysis:report", group: "analyze", defaults: ["F3"], run: () => openDialog("report") },
   { id: "ai-move", label: "analysis:aimove", group: "analyze", defaults: ["Enter"], run: aiMoveNow },
   { id: "play-to-end", label: "analysis:playtoend", group: "analyze", defaults: ["L"], run: selfplayToEnd },
+  {
+    id: "pv-shorter",
+    label: "pv:shorter",
+    group: "analyze",
+    defaults: [","],
+    run: () => void stepPvDepth(-1),
+  },
+  { id: "pv-longer", label: "pv:longer", group: "analyze", defaults: ["."], run: () => void stepPvDepth(1) },
   {
     id: "tsumego-frame",
     label: "analysis:tsumegoframe",
