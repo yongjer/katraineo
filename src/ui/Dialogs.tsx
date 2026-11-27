@@ -6,6 +6,7 @@ import { NewGameDialog } from "./dialogs/NewGameDialog";
 import { ReportDialog } from "./dialogs/ReportDialog";
 import { RecoveryDialog, UnsavedDialog, UpdateDialog } from "./dialogs/SessionDialogs";
 import { SettingsDialog } from "./dialogs/SettingsDialog";
+import { ShortcutsDialog } from "./dialogs/ShortcutsDialog";
 import { LogDialog, ReanalyzeDialog, TimerDialog, TsumegoDialog } from "./dialogs/ToolDialogs";
 
 export function Dialogs() {
@@ -21,5 +22,6 @@ export function Dialogs() {
   if (dialog === "ai") return <AiSettingsDialog />;
   if (dialog === "log") return <LogDialog />;
   if (dialog === "update") return <UpdateDialog />;
+  if (dialog === "shortcuts") return <ShortcutsDialog />;
   return null;
 }

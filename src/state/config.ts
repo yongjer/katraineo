@@ -31,6 +31,14 @@ export interface TimerSettings {
   sound: boolean;
 }
 
+/** How the app looks (Settings → Appearance). */
+export interface AppearanceSettings {
+  /** the UI colors: KaTrain's dark blue, light, or whichever of the two the system prefers */
+  theme: "dark" | "light" | "system";
+  board: "classic" | "wood" | "light" | "gray";
+  stones: "classic" | "slate-shell" | "flat";
+}
+
 export interface AppConfig {
   engine: EngineSettings;
   timer: TimerSettings;
@@ -53,7 +61,10 @@ export interface AppConfig {
     analyze: AnalysisToggles;
     graph: { score: boolean; winrate: boolean };
     players: { B: PlayerSetup; W: PlayerSetup };
+    appearance: AppearanceSettings;
   };
+  /** keyboard shortcuts that differ from the defaults: action id → key combinations (src/ui/shortcuts.ts) */
+  shortcuts: Record<string, string[]>;
 }
 
 export function defaultConfig(): AppConfig {
@@ -73,7 +84,9 @@ export function defaultConfig(): AppConfig {
         B: { type: "player:human", strategy: "ai:p:rank", subtype: "game:normal" },
         W: { type: "player:ai", strategy: "ai:p:rank", subtype: "game:normal" },
       },
+      appearance: { theme: "dark", board: "classic", stones: "classic" },
     },
+    shortcuts: {},
   };
 }
 
@@ -94,6 +107,13 @@ export function mergeConfig<T>(defaults: T, saved: unknown): T {
   }
   // AI strategy sections are open-ended
   if ("ai" in out && isObject(saved.ai)) out.ai = { ...(out.ai as object), ...(saved.ai as object) };
+  // so are the changed shortcuts: action id → key combinations
+  if ("shortcuts" in out && isObject(saved.shortcuts)) {
+    const shortcuts: Record<string, string[]> = {};
+    for (const [id, keys] of Object.entries(saved.shortcuts))
+      if (Array.isArray(keys) && keys.every((k) => typeof k === "string")) shortcuts[id] = keys;
+    out.shortcuts = shortcuts;
+  }
   return out as T;
 }
 

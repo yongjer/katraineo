@@ -10,6 +10,7 @@ import {
   checkForUpdates,
   clearRecentFiles,
   copySgf,
+  cycleFocusMode,
   pasteSgf,
   selfplayToEnd,
   toggleInsertMode,
@@ -31,15 +32,20 @@ import {
   useStore,
 } from "../state/store";
 import { platform } from "../state/platform";
-import { MOD_KEY, THEME } from "./theme";
+import { useShortcutLabels } from "./shortcuts";
+import { THEME } from "./theme";
 
+/** The analysis toggles: config key, label, shortcut action. */
 const TOGGLES: [keyof AnalysisToggles, string, string][] = [
-  ["show_children", "analysis:nextmoves", "Q"],
-  ["eval", "analysis:dots", "W"],
-  ["hints", "analysis:topmoves", "E"],
-  ["policy", "analysis:policy", "R"],
-  ["ownership", "analysis:territory", "T"],
+  ["show_children", "analysis:nextmoves", "show-children"],
+  ["eval", "analysis:dots", "eval"],
+  ["hints", "analysis:topmoves", "hints"],
+  ["policy", "analysis:policy", "policy"],
+  ["ownership", "analysis:territory", "ownership"],
 ];
+
+/** " (key)" for a tooltip, or nothing when the action has no key. */
+const keyHint = (key: string) => (key ? ` (${key})` : "");
 
 function oneLine(s: string) {
   return s.replace(/\s*\n\s*/g, " ");
@@ -51,6 +57,7 @@ export function TopBar() {
   const recentFiles = useStore((s) => s.config.general.recent_files);
   const [menuOpen, setMenuOpen] = useState(false);
   const [extraOpen, setExtraOpen] = useState(false);
+  const key = useShortcutLabels();
   return (
     <header className="topbar">
       <div className="menu-anchor">
@@ -59,10 +66,10 @@ export function TopBar() {
         </button>
         {menuOpen && (
           <Dropdown onClose={() => setMenuOpen(false)}>
-            <MenuItem label={t("menu:newgame")} shortcut={`${MOD_KEY}N`} onClick={() => openDialog("newgame")} />
-            <MenuItem label={t("menu:load")} shortcut={`${MOD_KEY}L`} onClick={() => void loadGame()} />
-            <MenuItem label={t("menu:save")} shortcut={`${MOD_KEY}S`} onClick={() => void saveGame(false)} />
-            <MenuItem label={t("menu:save-as")} shortcut={`${MOD_KEY}D`} onClick={() => void saveGame(true)} />
+            <MenuItem label={t("menu:newgame")} shortcut={key("new-game")} onClick={() => openDialog("newgame")} />
+            <MenuItem label={t("menu:load")} shortcut={key("load")} onClick={() => void loadGame()} />
+            <MenuItem label={t("menu:save")} shortcut={key("save")} onClick={() => void saveGame(false)} />
+            <MenuItem label={t("menu:save-as")} shortcut={key("save-as")} onClick={() => void saveGame(true)} />
             {platform.isDesktop && recentFiles.length > 0 && (
               <>
                 <hr />
@@ -79,13 +86,20 @@ export function TopBar() {
               </>
             )}
             <hr />
-            <MenuItem label={t("menu:settings")} shortcut="F8" onClick={() => openDialog("settings")} />
-            <MenuItem label={t("menu:aisettings")} shortcut="F7" onClick={() => openDialog("ai")} />
-            <MenuItem label={t("menu:clocksettings")} shortcut="F5" onClick={() => openDialog("timer")} />
+            <MenuItem label={t("menu:settings")} shortcut={key("settings")} onClick={() => openDialog("settings")} />
+            <MenuItem label={t("menu:aisettings")} shortcut={key("ai-settings")} onClick={() => openDialog("ai")} />
+            <MenuItem
+              label={t("menu:clocksettings")}
+              shortcut={key("timer-settings")}
+              onClick={() => openDialog("timer")}
+            />
             <hr />
-            <MenuItem label={t("menu:copy-sgf")} shortcut={`${MOD_KEY}C`} onClick={() => void copySgf()} />
-            <MenuItem label={t("menu:paste-sgf")} shortcut={`${MOD_KEY}V`} onClick={() => void pasteSgf()} />
+            <MenuItem label={t("menu:copy-sgf")} shortcut={key("copy-sgf")} onClick={() => void copySgf()} />
+            <MenuItem label={t("menu:paste-sgf")} shortcut={key("paste-sgf")} onClick={() => void pasteSgf()} />
             <MenuItem label={t("menu:katago-log")} onClick={() => openDialog("log")} />
+            <hr />
+            <MenuItem label={t("shortcuts:focus")} shortcut={key("focus")} onClick={cycleFocusMode} />
+            <MenuItem label={t("menu:shortcuts")} shortcut={key("shortcuts")} onClick={() => openDialog("shortcuts")} />
             {platform.isDesktop && (
               <>
                 <hr />
@@ -114,16 +128,16 @@ export function TopBar() {
         </button>
       </div>
       <div className="toggles">
-        {TOGGLES.map(([key, label, shortcut]) => (
+        {TOGGLES.map(([toggle, label, action]) => (
           <button
-            key={key}
-            className={`toggle ${toggles[key] ? "on" : ""}`}
-            onClick={() => toggleControl(key)}
-            title={`${oneLine(t(label))} (${shortcut})`}
+            key={toggle}
+            className={`toggle ${toggles[toggle] ? "on" : ""}`}
+            onClick={() => toggleControl(toggle)}
+            title={`${oneLine(t(label))}${keyHint(key(action))}`}
           >
-            <span className="check">{toggles[key] ? "●" : "○"}</span>
+            <span className="check">{toggles[toggle] ? "●" : "○"}</span>
             {oneLine(t(label))}
-            <kbd>{shortcut}</kbd>
+            {key(action) && <kbd>{key(action)}</kbd>}
           </button>
         ))}
       </div>
@@ -134,19 +148,31 @@ export function TopBar() {
         </button>
         {extraOpen && (
           <Dropdown onClose={() => setExtraOpen(false)} align="right">
-            <MenuItem label={t("analysis:extra")} shortcut="A" onClick={() => analyzeExtra("extra")} />
-            <MenuItem label={t("analysis:equalize")} shortcut="S" onClick={() => analyzeExtra("equalize")} />
-            <MenuItem label={t("analysis:sweep")} shortcut="D" onClick={() => analyzeExtra("sweep")} />
-            <MenuItem label={t("analysis:alternatives")} shortcut="F" onClick={() => analyzeExtra("alternative")} />
-            <MenuItem label={t("analysis:reset")} shortcut="H" onClick={resetAnalysis} />
+            <MenuItem label={t("analysis:extra")} shortcut={key("extra")} onClick={() => analyzeExtra("extra")} />
+            <MenuItem
+              label={t("analysis:equalize")}
+              shortcut={key("equalize")}
+              onClick={() => analyzeExtra("equalize")}
+            />
+            <MenuItem label={t("analysis:sweep")} shortcut={key("sweep")} onClick={() => analyzeExtra("sweep")} />
+            <MenuItem
+              label={t("analysis:alternatives")}
+              shortcut={key("alternatives")}
+              onClick={() => analyzeExtra("alternative")}
+            />
+            <MenuItem label={t("analysis:reset")} shortcut={key("reset-analysis")} onClick={resetAnalysis} />
             <hr />
-            <MenuItem label={t("analysis:continuous")} shortcut="Space" onClick={togglePondering} />
-            <MenuItem label={t("analysis:game")} shortcut="F2" onClick={() => openDialog("reanalyze")} />
-            <MenuItem label={t("analysis:report")} shortcut="F3" onClick={() => openDialog("report")} />
-            <MenuItem label={t("analysis:aimove")} shortcut="Enter" onClick={aiMoveNow} />
-            <MenuItem label={t("analysis:playtoend")} shortcut="L" onClick={selfplayToEnd} />
-            <MenuItem label={t("analysis:insert")} shortcut="I" onClick={toggleInsertMode} />
-            <MenuItem label={t("analysis:tsumegoframe")} shortcut="F10" onClick={() => openDialog("tsumego")} />
+            <MenuItem label={t("analysis:continuous")} shortcut={key("ponder")} onClick={togglePondering} />
+            <MenuItem label={t("analysis:game")} shortcut={key("reanalyze")} onClick={() => openDialog("reanalyze")} />
+            <MenuItem label={t("analysis:report")} shortcut={key("report")} onClick={() => openDialog("report")} />
+            <MenuItem label={t("analysis:aimove")} shortcut={key("ai-move")} onClick={aiMoveNow} />
+            <MenuItem label={t("analysis:playtoend")} shortcut={key("play-to-end")} onClick={selfplayToEnd} />
+            <MenuItem label={t("analysis:insert")} shortcut={key("insert")} onClick={toggleInsertMode} />
+            <MenuItem
+              label={t("analysis:tsumegoframe")}
+              shortcut={key("tsumego-frame")}
+              onClick={() => openDialog("tsumego")}
+            />
           </Dropdown>
         )}
       </div>
@@ -219,6 +245,7 @@ function MenuItem({
 }
 
 export function ControlsBar() {
+  const key = useShortcutLabels();
   const status = useStore((s) => s.status);
   const pondering = useStore((s) => s.pondering);
   useStore((s) => s.tick);
@@ -246,20 +273,25 @@ export function ControlsBar() {
       <div className="nav">
         <NavButton
           label="⇤✗"
-          title={`${t("nav:previous-mistake")} (Shift+N)`}
+          title={`${t("nav:previous-mistake")}${keyHint(key("previous-mistake"))}`}
           onClick={() => findMistake("undo")}
           mistake
         />
-        <NavButton label="⏮" title={`${t("nav:start")} (Home)`} onClick={() => undo(9999)} />
-        <NavButton label="⏪" title={`${t("nav:back-10")} (Shift+Left)`} onClick={() => undo(10)} />
-        <NavButton label="◀" title={`${t("nav:previous")} (Left / Z)`} onClick={() => undo(1)} />
-        <NavButton label="▶" title={`${t("nav:next")} (Right / X)`} onClick={() => redo(1)} />
-        <NavButton label="⏩" title={`${t("nav:forward-10")} (Shift+Right)`} onClick={() => redo(10)} />
-        <NavButton label="⏭" title={`${t("nav:end")} (End)`} onClick={() => redo(9999)} />
-        <NavButton label="✗⇥" title={`${t("nav:next-mistake")} (N)`} onClick={() => findMistake("redo")} mistake />
+        <NavButton label="⏮" title={`${t("nav:start")}${keyHint(key("start"))}`} onClick={() => undo(9999)} />
+        <NavButton label="⏪" title={`${t("nav:back-10")}${keyHint(key("undo-10"))}`} onClick={() => undo(10)} />
+        <NavButton label="◀" title={`${t("nav:previous")}${keyHint(key("undo"))}`} onClick={() => undo(1)} />
+        <NavButton label="▶" title={`${t("nav:next")}${keyHint(key("redo"))}`} onClick={() => redo(1)} />
+        <NavButton label="⏩" title={`${t("nav:forward-10")}${keyHint(key("redo-10"))}`} onClick={() => redo(10)} />
+        <NavButton label="⏭" title={`${t("nav:end")}${keyHint(key("end"))}`} onClick={() => redo(9999)} />
+        <NavButton
+          label="✗⇥"
+          title={`${t("nav:next-mistake")}${keyHint(key("next-mistake"))}`}
+          onClick={() => findMistake("redo")}
+          mistake
+        />
       </div>
       <div className="actions">
-        <button className="text-button" onClick={() => playAt(null)} title="P">
+        <button className="text-button" onClick={() => playAt(null)} title={key("pass")}>
           {t("pass-button-text")}
         </button>
         <button className="text-button" onClick={() => undo("smart")}>

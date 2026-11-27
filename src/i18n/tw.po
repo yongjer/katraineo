@@ -1286,3 +1286,121 @@ msgstr "本機 KataGo 啟動失敗，建議改下載 CPU（Eigen）版本執行�
 
 msgid "engine:cpu-fallback:button"
 msgstr "下載 CPU（Eigen）版 KataGo"
+
+#. appearance, focus modes & keyboard shortcuts
+msgid "appearance"
+msgstr "外觀"
+
+msgid "appearance:theme"
+msgstr "主題"
+
+msgid "appearance:theme:dark"
+msgstr "深藍（KaTrain）"
+
+msgid "appearance:theme:light"
+msgstr "淺色"
+
+msgid "appearance:theme:system"
+msgstr "跟隨系統"
+
+msgid "appearance:board"
+msgstr "棋盤"
+
+msgid "appearance:board:classic"
+msgstr "經典"
+
+msgid "appearance:board:wood"
+msgstr "木紋"
+
+msgid "appearance:board:light"
+msgstr "淺色木"
+
+msgid "appearance:board:gray"
+msgstr "灰色"
+
+msgid "appearance:stones"
+msgstr "棋子"
+
+msgid "appearance:stones:classic"
+msgstr "經典"
+
+msgid "appearance:stones:slate-shell"
+msgstr "那智黑石與蛤碁石"
+
+msgid "appearance:stones:flat"
+msgstr "扁平"
+
+msgid "focus:more"
+msgstr "下一個專注模式"
+
+msgid "focus:exit"
+msgstr "離開專注模式"
+
+msgid "menu:shortcuts"
+msgstr "鍵盤快捷鍵"
+
+msgid "shortcuts:group:file"
+msgstr "檔案與設定"
+
+msgid "shortcuts:group:navigate"
+msgstr "瀏覽"
+
+msgid "shortcuts:group:analyze"
+msgstr "分析"
+
+msgid "shortcuts:group:view"
+msgstr "顯示"
+
+msgid "shortcuts:group:edit"
+msgstr "編輯"
+
+msgid "shortcuts:filter"
+msgstr "搜尋動作或按鍵"
+
+msgid "shortcuts:add"
+msgstr "新增按鍵"
+
+msgid "shortcuts:remove"
+msgstr "移除 {key}"
+
+msgid "shortcuts:reset"
+msgstr "還原為預設按鍵"
+
+msgid "shortcuts:reset-all"
+msgstr "全部還原"
+
+msgid "shortcuts:done"
+msgstr "完成"
+
+msgid "shortcuts:press"
+msgstr "請按下按鍵…（Esc 取消）"
+
+msgid "shortcuts:moved"
+msgstr "已從此處移除：{actions}"
+
+msgid "shortcuts:mode"
+msgstr "切換對弈與分析"
+
+msgid "shortcuts:coordinates"
+msgstr "顯示座標"
+
+msgid "shortcuts:focus"
+msgstr "專注模式"
+
+msgid "shortcuts:pause-timer"
+msgstr "暫停計時"
+
+msgid "nav:branch-up"
+msgstr "上一個分支"
+
+msgid "nav:branch-down"
+msgstr "下一個分支"
+
+msgid "nav:branch-point"
+msgstr "回到分支點"
+
+msgid "nav:main-branch-point"
+msgstr "回到主分支"
+
+msgid "analysis:stop"
+msgstr "停止分析"

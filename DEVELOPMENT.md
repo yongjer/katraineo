@@ -227,5 +227,16 @@ To try it without releasing anything:
 
 - Downloading KataGo binaries from the settings (set the path to a KataGo you downloaded instead)
 - Contributing to KataGo's distributed training
-- Themes and configurable keyboard shortcuts
-- The minimalistic UI modes (`~` / `F12`)
+
+## Shortcuts and themes
+
+The keyboard shortcuts are the actions in `src/ui/shortcuts.ts`, each with its default keys. The config's `shortcuts`
+holds only the actions whose keys were changed (in *Keyboard Shortcuts*), as action id → key combinations such as
+`"Mod+Shift+Z"` (`Mod` is Ctrl, or Cmd on macOS); menus and tooltips show the keys from there. Letters and digits go by
+the physical key (`e.code`), so they work with an input method or a non-Latin layout. A key with Shift that no action
+has runs the action of the key without Shift, as KaTrain's keys mostly did.
+
+The UI theme, board and stones (`ui.appearance` in the config) are attributes of the root element (`data-theme`,
+`data-board`, `data-stones`), and `src/ui/styles.css` sets its colors (CSS custom properties) by them. The wood grain
+is drawn once on a canvas (`src/ui/woodTexture.ts`) rather than with an SVG filter, which the board would recompute
+whenever it repaints.

@@ -16,7 +16,7 @@ import {
 } from "../../state/store";
 import { LANGUAGES } from "../i18nLoader";
 import { ModelPicker } from "../ModelPicker";
-import { EVAL_COLORS, IS_MAC } from "../theme";
+import { BOARD_STYLES, EVAL_COLORS, IS_MAC, STONE_STYLES, UI_THEMES, appearanceOf } from "../theme";
 import { Field, Modal, NumberInput } from "./common";
 
 export function SettingsDialog() {
@@ -32,6 +32,7 @@ export function SettingsDialog() {
   const e = draft.engine;
   const backend = resolveEngineBackend(e);
   const tr = draft.trainer;
+  const appearance = appearanceOf(draft.ui.appearance);
   const engine = getEngine();
   const localEngineDead = backend === "local" && !!engine && engine.state === "dead";
   const [cpuProgress, setCpuProgress] = useState<DownloadProgress | null>(null);
@@ -66,7 +67,7 @@ export function SettingsDialog() {
     }
   };
   // Closing with unsaved changes asks first, instead of silently dropping them.
-  const saved = (c: AppConfig) => JSON.stringify([c.general, c.engine, c.trainer]);
+  const saved = (c: AppConfig) => JSON.stringify([c.general, c.engine, c.trainer, c.ui.appearance]);
   const dirty = saved(draft) !== saved(config);
   const [confirming, setConfirming] = useState(false);
   useEffect(() => {
@@ -84,6 +85,7 @@ export function SettingsDialog() {
         c.general = draft.general;
         c.engine = draft.engine;
         c.trainer = draft.trainer;
+        c.ui.appearance = draft.ui.appearance;
       },
       { restartDeadEngine: true },
     );
@@ -138,6 +140,44 @@ export function SettingsDialog() {
           />
         </Field>
       )}
+
+      <h3>{t("appearance")}</h3>
+      <Field label={t("appearance:theme")}>
+        <select
+          value={appearance.theme}
+          onChange={(ev) => edit((c) => void (c.ui.appearance.theme = ev.target.value as typeof appearance.theme))}
+        >
+          {UI_THEMES.map((v) => (
+            <option key={v} value={v}>
+              {t(`appearance:theme:${v}`)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t("appearance:board")}>
+        <select
+          value={appearance.board}
+          onChange={(ev) => edit((c) => void (c.ui.appearance.board = ev.target.value as typeof appearance.board))}
+        >
+          {BOARD_STYLES.map((v) => (
+            <option key={v} value={v}>
+              {t(`appearance:board:${v}`)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t("appearance:stones")}>
+        <select
+          value={appearance.stones}
+          onChange={(ev) => edit((c) => void (c.ui.appearance.stones = ev.target.value as typeof appearance.stones))}
+        >
+          {STONE_STYLES.map((v) => (
+            <option key={v} value={v}>
+              {t(`appearance:stones:${v}`)}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <h3>{t("engine settings")}</h3>
       <div className="backend-tabs">

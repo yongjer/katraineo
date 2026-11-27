@@ -17,7 +17,9 @@ import { t } from "../core/i18n";
 import { Move, type Coords } from "../core/move";
 import { formatVisits, varToGrid } from "../core/utils";
 import { addPvToTree, finishRegionSelect, playAt, useStore } from "../state/store";
-import { EVAL_COLORS, THEME, evalColor, gtpColumn } from "./theme";
+import type { AppearanceSettings } from "../state/config";
+import { EVAL_COLORS, THEME, appearanceOf, evalColor, gtpColumn } from "./theme";
+import { woodTexture } from "./woodTexture";
 
 const STONE_R = 0.48;
 
@@ -47,6 +49,8 @@ export function Board() {
   const [hover, setHover] = useState<Coords | null>(null);
   const selecting = useStore((s) => s.selectingRegion);
   const showCoords = useStore((s) => s.showCoords);
+  const { board: boardStyle, stones: stoneStyle } = appearanceOf(useStore((s) => s.config.ui.appearance));
+  const shell = stoneStyle === "slate-shell";
   const [box, setBox] = useState<[number, number, number, number] | null>(null);
   const justSelected = useRef(false); // the click that ends a region selection must not play a stone
 
@@ -147,7 +151,7 @@ export function Board() {
           const big = p > 1e-4;
           items.push(
             <g key={`p${x},${y}`}>
-              {big && <circle cx={x} cy={py(y)} r={STONE_R * THEME.hintScale * 0.98} fill={THEME.boardApprox} />}
+              {big && <circle cx={x} cy={py(y)} r={STONE_R * THEME.hintScale * 0.98} className="hint-bg" />}
               <circle
                 cx={x}
                 cy={py(y)}
@@ -208,6 +212,7 @@ export function Board() {
             evalScale={evalScale}
             last={i === 0 && !isPlacement}
             number={config.trainer.show_move_numbers ? node.depth : null}
+            shell={shell}
           />,
         );
       }
@@ -217,7 +222,8 @@ export function Board() {
     for (let y = 0; y < sy; y++) {
       for (let x = 0; x < sx; x++) {
         const p = stoneGrid[y][x];
-        if (p && !drawn.has(`${x},${y}`)) stones.push(<Stone key={`x${x},${y}`} x={x} y={py(y)} player={p} />);
+        if (p && !drawn.has(`${x},${y}`))
+          stones.push(<Stone key={`x${x},${y}`} x={x} y={py(y)} player={p} shell={shell} />);
       }
     }
     layers.push(<g key="stones">{stones}</g>);
@@ -262,7 +268,7 @@ export function Board() {
         const col = evalColor(d.pointsLost, trainer.eval_thresholds, theme)!;
         items.push(
           <g key={`h${d.move}`} className="hint">
-            {textOn && show.length > 0 && <circle cx={x} cy={y} r={STONE_R * scale * 0.98} fill={THEME.boardApprox} />}
+            {textOn && show.length > 0 && <circle cx={x} cy={y} r={STONE_R * scale * 0.98} className="hint-bg" />}
             <circle cx={x} cy={y} r={STONE_R * scale} fill={col} opacity={alpha} />
             {textOn && show.length === 1 && (
               <text x={x} y={y} className="hint-text single">
@@ -335,7 +341,7 @@ export function Board() {
 
     return { layers, hintTargets, sx, sy, py, stoneGrid, endResult, nextPlayer };
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- the game changes in place: tick counts its changes
-  }, [game, tick, toggles, trainer, theme, config.ui.players, config.trainer.show_move_numbers, teachingStatus]);
+  }, [game, tick, toggles, trainer, theme, config.ui.players, config.trainer.show_move_numbers, teachingStatus, shell]);
 
   if (!game || !content) return <div className="board-wrap" />;
   const { layers, hintTargets, sx, sy, py, stoneGrid, endResult, nextPlayer } = content;
@@ -405,11 +411,11 @@ export function Board() {
           if (c && canPlay && !stoneGrid[c[1]][c[0]]) playAt(c);
         }}
       >
-        <BoardDefs sx={sx} sy={sy} />
-        <BoardGrid sx={sx} sy={sy} showCoords={showCoords} inserting={game.insertMode} />
+        <BoardDefs sx={sx} sy={sy} stones={stoneStyle} />
+        <BoardGrid sx={sx} sy={sy} showCoords={showCoords} inserting={game.insertMode} wood={boardStyle === "wood"} />
         {layers}
-        {pv && <PvStones pv={pv} py={py} />}
-        {ghost && <Stone x={ghost[0]} y={py(ghost[1])} player={nextPlayer} opacity={THEME.ghostAlpha} />}
+        {pv && <PvStones pv={pv} py={py} shell={shell} />}
+        {ghost && <Stone x={ghost[0]} y={py(ghost[1])} player={nextPlayer} opacity={THEME.ghostAlpha} shell={shell} />}
         {box && (
           <rect
             x={Math.min(box[0], box[1]) - 0.5}
@@ -450,12 +456,15 @@ export const BoardGrid = memo(function BoardGrid({
   sy,
   showCoords,
   inserting,
+  wood,
 }: {
   sx: number;
   sy: number;
   showCoords: boolean;
   inserting: boolean;
+  wood: boolean;
 }) {
+  const texture = wood ? woodTexture() : null;
   const py = (y: number) => sy - 1 - y;
   const lines: ReactNode[] = [];
   for (let x = 0; x < sx; x++) lines.push(<line key={`v${x}`} x1={x} y1={0} x2={x} y2={sy - 1} />);
@@ -498,6 +507,23 @@ export const BoardGrid = memo(function BoardGrid({
         rx={0.15}
         className={`board-bg ${inserting ? "inserting" : ""}`}
       />
+      {texture && (
+        <>
+          <clipPath id="board-shape">
+            <rect x={-1.05} y={-1.05} width={sx + 1.1} height={sy + 1.1} rx={0.15} />
+          </clipPath>
+          <image
+            href={texture}
+            x={-1.05}
+            y={-1.05}
+            width={sx + 1.1}
+            height={sy + 1.1}
+            preserveAspectRatio="none"
+            clipPath="url(#board-shape)"
+            className={`board-texture ${inserting ? "inserting" : ""}`}
+          />
+        </>
+      )}
       <g className="grid">{lines}</g>
       <g className="stars">{stars}</g>
       {showCoords && <g className="coords">{coords}</g>}
@@ -505,23 +531,78 @@ export const BoardGrid = memo(function BoardGrid({
   );
 });
 
-/** Gradients and filters used by the other layers. */
-const BoardDefs = memo(function BoardDefs({ sx, sy }: { sx: number; sy: number }) {
+/** The gradients of the stones, for each stone style: [black stops, white stops] as [offset, color]. */
+const STONE_GRADIENTS: Record<AppearanceSettings["stones"], [string, string][][]> = {
+  classic: [
+    [
+      ["0%", "#5a5a5a"],
+      ["45%", "#1c1c1c"],
+      ["100%", "#030303"],
+    ],
+    [
+      ["0%", "#ffffff"],
+      ["60%", "#ececec"],
+      ["100%", "#bdbdbd"],
+    ],
+  ],
+  // matte slate and clam shell, a little warmer
+  "slate-shell": [
+    [
+      ["0%", "#4a4a48"],
+      ["35%", "#242423"],
+      ["100%", "#0b0b0a"],
+    ],
+    [
+      ["0%", "#fefdf8"],
+      ["65%", "#efede4"],
+      ["100%", "#cbc7b8"],
+    ],
+  ],
+  flat: [
+    [
+      ["0%", "#151515"],
+      ["100%", "#151515"],
+    ],
+    [
+      ["0%", "#f6f6f6"],
+      ["100%", "#f6f6f6"],
+    ],
+  ],
+};
+
+/** Gradients, patterns and filters used by the other layers. */
+const BoardDefs = memo(function BoardDefs({
+  sx,
+  sy,
+  stones,
+}: {
+  sx: number;
+  sy: number;
+  stones: AppearanceSettings["stones"];
+}) {
+  const [black, white] = STONE_GRADIENTS[stones];
   return (
     <defs>
       <clipPath id="board-clip">
         <rect x={-0.5} y={-0.5} width={sx} height={sy} />
       </clipPath>
       <radialGradient id="stone-B" cx="35%" cy="30%" r="75%">
-        <stop offset="0%" stopColor="#5a5a5a" />
-        <stop offset="45%" stopColor="#1c1c1c" />
-        <stop offset="100%" stopColor="#030303" />
+        {black.map(([offset, color]) => (
+          <stop key={offset} offset={offset} stopColor={color} />
+        ))}
       </radialGradient>
       <radialGradient id="stone-W" cx="35%" cy="30%" r="80%">
-        <stop offset="0%" stopColor="#ffffff" />
-        <stop offset="60%" stopColor="#ececec" />
-        <stop offset="100%" stopColor="#bdbdbd" />
+        {white.map(([offset, color]) => (
+          <stop key={offset} offset={offset} stopColor={color} />
+        ))}
       </radialGradient>
+      {/* the stripes of a shell stone, the same on every stone */}
+      <pattern id="shell-grain" patternContentUnits="objectBoundingBox" width={1} height={1}>
+        {Array.from({ length: 11 }, (_, i) => {
+          const y = 0.08 + i * 0.085;
+          return <path key={i} d={`M-0.1,${y + 0.05} Q0.5,${y - 0.07} 1.1,${y + 0.03}`} className="shell-line" />;
+        })}
+      </pattern>
       <radialGradient id="eval-dot" cx="50%" cy="50%" r="50%">
         <stop offset="60%" stopColor="white" stopOpacity="1" />
         <stop offset="100%" stopColor="white" stopOpacity="0.6" />
@@ -549,8 +630,20 @@ const Stone = memo(function Stone(props: {
   evalScale?: number;
   last?: boolean;
   number?: number | null;
+  /** slate and shell stones: white stones have stripes */
+  shell?: boolean;
 }) {
-  const { x, y, player, ownership = null, evalColor: ec = null, evalScale = 1, last = false, number = null } = props;
+  const {
+    x,
+    y,
+    player,
+    ownership = null,
+    evalColor: ec = null,
+    evalScale = 1,
+    last = false,
+    number = null,
+    shell = false,
+  } = props;
   let opacity = props.opacity ?? 1;
   let mark: ReactNode = null;
   if (ownership !== null && ownership !== undefined) {
@@ -565,7 +658,7 @@ const Stone = memo(function Stone(props: {
   const evalR = STONE_R * (THEME.evalDotMin + Math.sqrt(evalScale) * (THEME.evalDotMax - THEME.evalDotMin));
   return (
     <g opacity={opacity}>
-      <circle cx={x} cy={y} r={STONE_R} fill={`url(#stone-${player})`} className={`stone stone-${player}`} />
+      <StoneBody x={x} y={y} player={player} shell={shell} />
       {mark}
       {ec && <circle cx={x} cy={y} r={evalR} fill={ec} className="eval-dot" />}
       {last && <circle cx={x} cy={y} r={STONE_R * 0.4} className={`last-move last-${player}`} />}
@@ -578,7 +671,16 @@ const Stone = memo(function Stone(props: {
   );
 });
 
-function PvStones({ pv, py }: { pv: PvOverlay; py: (y: number) => number }) {
+function StoneBody({ x, y, player, shell }: { x: number; y: number; player: Player; shell: boolean }) {
+  return (
+    <>
+      <circle cx={x} cy={y} r={STONE_R} fill={`url(#stone-${player})`} className={`stone stone-${player}`} />
+      {shell && player === "W" && <circle cx={x} cy={y} r={STONE_R} fill="url(#shell-grain)" />}
+    </>
+  );
+}
+
+function PvStones({ pv, py, shell }: { pv: PvOverlay; py: (y: number) => number; shell: boolean }) {
   const players: Player[] = [pv.startPlayer, Move.opponentPlayer(pv.startPlayer)];
   const seen = new Set<string>();
   const items: ReactNode[] = [];
@@ -591,7 +693,7 @@ function PvStones({ pv, py }: { pv: PvOverlay; py: (y: number) => number }) {
     const [x, y] = [m.coords[0], py(m.coords[1])];
     items.push(
       <g key={`pv${i}`}>
-        <circle cx={x} cy={y} r={STONE_R} fill={`url(#stone-${m.player})`} className={`stone stone-${m.player}`} />
+        <StoneBody x={x} y={y} player={m.player} shell={shell} />
         <text x={x} y={y} className={`stone-number pv on-${m.player}`}>
           {i + 1}
         </text>
