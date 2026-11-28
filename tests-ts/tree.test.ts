@@ -3,7 +3,7 @@ import { Game, type GameHost, type StatusLevel } from "../src/core/game";
 import { GameNode, type KataGoResponse } from "../src/core/gameNode";
 import { Move } from "../src/core/move";
 import { parseSgf, writeSgf } from "../src/core/sgf";
-import { layoutTree } from "../src/ui/MoveTree";
+import { layoutTree, visibleTreeItems } from "../src/ui/MoveTree";
 import { host, TRAINER } from "./helpers";
 
 function gameFrom(sgf: string, h: GameHost = host) {
@@ -78,6 +78,53 @@ describe("move tree editing (ported from movetree.py)", () => {
     expect(layout.pos.get(nodeAt(g, "D4", "Q16", "C3", "D3"))).toEqual([4, 0]);
     expect(layout.pos.get(nodeAt(g, "D4", "Q16", "R4"))).toEqual([3, 1]);
     expect(layout.pos.get(nodeAt(g, "D4", "Q16", "R4", "Q4"))).toEqual([4, 1]);
+  });
+});
+
+describe("drawing only the visible part of the move tree", () => {
+  // a 300 move main line with a 5 move variation at every 20th move
+  function bigTree() {
+    const root = new GameNode(null, { SZ: 19 });
+    let node = root;
+    for (let i = 0; i < 300; i++) {
+      const player = i % 2 ? "W" : "B";
+      const next = new GameNode(node, undefined, new Move([i % 19, Math.floor(i / 19) % 19], player));
+      if (i % 20 === 10) {
+        let v = new GameNode(node, undefined, new Move([18 - (i % 19), 18], player));
+        for (let k = 0; k < 4; k++)
+          v = new GameNode(v, undefined, new Move([k, 17], k % 2 ? player : player === "B" ? "W" : "B"));
+      }
+      node = next;
+    }
+    return { root, last: node };
+  }
+
+  it("draws the nodes and lines near the viewport and the nodes it must keep", () => {
+    const { root, last } = bigTree();
+    const layout = layoutTree(root);
+    const view = { left: 0, top: 0, width: 300, height: 200 };
+    const { nodes, lines } = visibleTreeItems(layout, view, [last], 0);
+    expect(nodes.length).toBeLessThan(40);
+    expect(nodes.map(([n]) => n)).toContain(last);
+    expect(nodes.map(([n]) => n)).toContain(root);
+    // every line drawn starts or ends near the viewport
+    for (const [, x] of lines.matchAll(/M(\d+)/g)) expect(Number(x)).toBeLessThan(340);
+  });
+
+  it("draws everything when the whole tree is visible", () => {
+    const { root } = bigTree();
+    const layout = layoutTree(root);
+    const all = visibleTreeItems(layout, { left: 0, top: 0, width: layout.width, height: layout.height });
+    expect(all.nodes.length).toBe(layout.pos.size);
+    expect(all.lines.match(/M/g)!.length).toBe(layout.pos.size - 1);
+  });
+
+  it("follows the viewport when it scrolls", () => {
+    const { root } = bigTree();
+    const layout = layoutTree(root);
+    const end = visibleTreeItems(layout, { left: layout.width - 300, top: 0, width: 300, height: 200 }, [], 0);
+    const depths = end.nodes.map(([n]) => n.depth);
+    expect(Math.min(...depths)).toBeGreaterThan(280);
   });
 });
 

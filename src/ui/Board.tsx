@@ -1,6 +1,6 @@
 // The go board, ported from katrain/gui/badukpan.py. Drawn as SVG in board units: one grid cell = 1.
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   MODE_PLAY,
   PLAYER_AI,
@@ -64,63 +64,6 @@ export function Board() {
     const stoneGrid = game.stoneGrid;
     const endResult = game.endResult;
     const layers: ReactNode[] = [];
-
-    // ---------------------------------------------------- board
-    const lines: ReactNode[] = [];
-    for (let x = 0; x < sx; x++) lines.push(<line key={`v${x}`} x1={x} y1={0} x2={x} y2={sy - 1} />);
-    for (let y = 0; y < sy; y++) lines.push(<line key={`h${y}`} x1={0} y1={y} x2={sx - 1} y2={y} />);
-    const starCoords = (size: number) => {
-      if (size < 7) return [];
-      const edge = size >= 13 ? 3 : 2;
-      const pts = [edge, size - 1 - edge];
-      if (size % 2 === 1 && size > 9) pts.splice(1, 0, (size - 1) / 2);
-      return pts;
-    };
-    const stars: ReactNode[] = [];
-    for (const x of starCoords(sx))
-      for (const y of starCoords(sy)) stars.push(<circle key={`s${x},${y}`} cx={x} cy={py(y)} r={0.1} />);
-    if (sx === sy && sx % 2 === 1 && sx <= 9 && sx >= 7)
-      stars.push(<circle key="tengen" cx={(sx - 1) / 2} cy={(sy - 1) / 2} r={0.1} />);
-    const coords: ReactNode[] = [];
-    for (let x = 0; x < sx; x++) {
-      coords.push(
-        <text key={`cx${x}`} x={x} y={sy - 1 + 0.82} className="coord">
-          {gtpColumn(x)}
-        </text>,
-      );
-      coords.push(
-        <text key={`cxt${x}`} x={x} y={-0.62} className="coord">
-          {gtpColumn(x)}
-        </text>,
-      );
-    }
-    for (let y = 0; y < sy; y++) {
-      coords.push(
-        <text key={`cy${y}`} x={-0.8} y={py(y)} className="coord">
-          {y + 1}
-        </text>,
-      );
-      coords.push(
-        <text key={`cyr${y}`} x={sx - 1 + 0.8} y={py(y)} className="coord">
-          {y + 1}
-        </text>,
-      );
-    }
-    layers.push(
-      <g key="board">
-        <rect
-          x={-1.05}
-          y={-1.05}
-          width={sx + 1.1}
-          height={sy + 1.1}
-          rx={0.15}
-          className={`board-bg ${game.insertMode ? "inserting" : ""}`}
-        />
-        <g className="grid">{lines}</g>
-        <g className="stars">{stars}</g>
-        {showCoords && <g className="coords">{coords}</g>}
-      </g>,
-    );
 
     // ---------------------------------------------------- ownership
     const ownership = cn.ownership ?? cn.parent?.ownership ?? null;
@@ -392,17 +335,7 @@ export function Board() {
 
     return { layers, hintTargets, sx, sy, py, stoneGrid, endResult, nextPlayer };
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- the game changes in place: tick counts its changes
-  }, [
-    game,
-    tick,
-    toggles,
-    trainer,
-    theme,
-    config.ui.players,
-    config.trainer.show_move_numbers,
-    teachingStatus,
-    showCoords,
-  ]);
+  }, [game, tick, toggles, trainer, theme, config.ui.players, config.trainer.show_move_numbers, teachingStatus]);
 
   if (!game || !content) return <div className="board-wrap" />;
   const { layers, hintTargets, sx, sy, py, stoneGrid, endResult, nextPlayer } = content;
@@ -472,31 +405,8 @@ export function Board() {
           if (c && canPlay && !stoneGrid[c[1]][c[0]]) playAt(c);
         }}
       >
-        <defs>
-          <clipPath id="board-clip">
-            <rect x={-0.5} y={-0.5} width={sx} height={sy} />
-          </clipPath>
-          <radialGradient id="stone-B" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stopColor="#5a5a5a" />
-            <stop offset="45%" stopColor="#1c1c1c" />
-            <stop offset="100%" stopColor="#030303" />
-          </radialGradient>
-          <radialGradient id="stone-W" cx="35%" cy="30%" r="80%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="60%" stopColor="#ececec" />
-            <stop offset="100%" stopColor="#bdbdbd" />
-          </radialGradient>
-          <radialGradient id="eval-dot" cx="50%" cy="50%" r="50%">
-            <stop offset="60%" stopColor="white" stopOpacity="1" />
-            <stop offset="100%" stopColor="white" stopOpacity="0.6" />
-          </radialGradient>
-          <filter id="territory-blur" x="-5%" y="-5%" width="110%" height="110%">
-            <feGaussianBlur stdDeviation="0.28" />
-          </filter>
-          <filter id="stone-shadow" x="-20%" y="-20%" width="150%" height="150%">
-            <feDropShadow dx="0.05" dy="0.07" stdDeviation="0.05" floodOpacity="0.45" />
-          </filter>
-        </defs>
+        <BoardDefs sx={sx} sy={sy} />
+        <BoardGrid sx={sx} sy={sy} showCoords={showCoords} inserting={game.insertMode} />
         {layers}
         {pv && <PvStones pv={pv} py={py} />}
         {ghost && <Stone x={ghost[0]} y={py(ghost[1])} player={nextPlayer} opacity={THEME.ghostAlpha} />}
@@ -522,7 +432,114 @@ export function Board() {
   );
 }
 
-function Stone(props: {
+// ---------------------------------------------------------------- static layers
+// The parts of the board that only change with its size: memoized, so that the frequent re-renders while analysis
+// comes in (pondering above all) do not rebuild them.
+
+const starCoords = (size: number) => {
+  if (size < 7) return [];
+  const edge = size >= 13 ? 3 : 2;
+  const pts = [edge, size - 1 - edge];
+  if (size % 2 === 1 && size > 9) pts.splice(1, 0, (size - 1) / 2);
+  return pts;
+};
+
+/** The wooden board, its lines, star points and coordinates. */
+export const BoardGrid = memo(function BoardGrid({
+  sx,
+  sy,
+  showCoords,
+  inserting,
+}: {
+  sx: number;
+  sy: number;
+  showCoords: boolean;
+  inserting: boolean;
+}) {
+  const py = (y: number) => sy - 1 - y;
+  const lines: ReactNode[] = [];
+  for (let x = 0; x < sx; x++) lines.push(<line key={`v${x}`} x1={x} y1={0} x2={x} y2={sy - 1} />);
+  for (let y = 0; y < sy; y++) lines.push(<line key={`h${y}`} x1={0} y1={y} x2={sx - 1} y2={y} />);
+  const stars: ReactNode[] = [];
+  for (const x of starCoords(sx))
+    for (const y of starCoords(sy)) stars.push(<circle key={`s${x},${y}`} cx={x} cy={py(y)} r={0.1} />);
+  if (sx === sy && sx % 2 === 1 && sx <= 9 && sx >= 7)
+    stars.push(<circle key="tengen" cx={(sx - 1) / 2} cy={(sy - 1) / 2} r={0.1} />);
+  const coords: ReactNode[] = [];
+  if (showCoords) {
+    for (let x = 0; x < sx; x++) {
+      coords.push(
+        <text key={`cx${x}`} x={x} y={sy - 1 + 0.82} className="coord">
+          {gtpColumn(x)}
+        </text>,
+        <text key={`cxt${x}`} x={x} y={-0.62} className="coord">
+          {gtpColumn(x)}
+        </text>,
+      );
+    }
+    for (let y = 0; y < sy; y++) {
+      coords.push(
+        <text key={`cy${y}`} x={-0.8} y={py(y)} className="coord">
+          {y + 1}
+        </text>,
+        <text key={`cyr${y}`} x={sx - 1 + 0.8} y={py(y)} className="coord">
+          {y + 1}
+        </text>,
+      );
+    }
+  }
+  return (
+    <g>
+      <rect
+        x={-1.05}
+        y={-1.05}
+        width={sx + 1.1}
+        height={sy + 1.1}
+        rx={0.15}
+        className={`board-bg ${inserting ? "inserting" : ""}`}
+      />
+      <g className="grid">{lines}</g>
+      <g className="stars">{stars}</g>
+      {showCoords && <g className="coords">{coords}</g>}
+    </g>
+  );
+});
+
+/** Gradients and filters used by the other layers. */
+const BoardDefs = memo(function BoardDefs({ sx, sy }: { sx: number; sy: number }) {
+  return (
+    <defs>
+      <clipPath id="board-clip">
+        <rect x={-0.5} y={-0.5} width={sx} height={sy} />
+      </clipPath>
+      <radialGradient id="stone-B" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stopColor="#5a5a5a" />
+        <stop offset="45%" stopColor="#1c1c1c" />
+        <stop offset="100%" stopColor="#030303" />
+      </radialGradient>
+      <radialGradient id="stone-W" cx="35%" cy="30%" r="80%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="60%" stopColor="#ececec" />
+        <stop offset="100%" stopColor="#bdbdbd" />
+      </radialGradient>
+      <radialGradient id="eval-dot" cx="50%" cy="50%" r="50%">
+        <stop offset="60%" stopColor="white" stopOpacity="1" />
+        <stop offset="100%" stopColor="white" stopOpacity="0.6" />
+      </radialGradient>
+      <filter id="territory-blur" x="-5%" y="-5%" width="110%" height="110%">
+        <feGaussianBlur stdDeviation="0.28" />
+      </filter>
+      <filter id="stone-shadow" x="-20%" y="-20%" width="150%" height="150%">
+        <feDropShadow dx="0.05" dy="0.07" stdDeviation="0.05" floodOpacity="0.45" />
+      </filter>
+    </defs>
+  );
+});
+
+// ---------------------------------------------------------------- stones
+/** A stone, with its ownership mark, evaluation dot, last move marker and move number. Memoized: its props are plain
+ * values, so a stone whose look did not change is not rendered again. */
+const Stone = memo(function Stone(props: {
   x: number;
   y: number;
   player: Player;
@@ -559,7 +576,7 @@ function Stone(props: {
       )}
     </g>
   );
-}
+});
 
 function PvStones({ pv, py }: { pv: PvOverlay; py: (y: number) => number }) {
   const players: Player[] = [pv.startPlayer, Move.opponentPlayer(pv.startPlayer)];
