@@ -12,7 +12,7 @@
 
 ```text
 Set up Katraineo (https://github.com/yongjer/katraineo) for my OS and architecture:
-- To install the desktop app, download the matching installer from https://github.com/yongjer/katraineo/releases/latest (macOS: aarch64/x64 DMG or katraineo.rb Homebrew Cask with --no-quarantine; Windows: x64-setup.exe / .msi or katraineo.json Scoop manifest; Linux: .deb or .AppImage).
+- To install the desktop app, download the matching installer from https://github.com/yongjer/katraineo/releases/latest (macOS, Apple Silicon only: aarch64 DMG or katraineo.rb Homebrew Cask with --no-quarantine; Windows: x64-setup.exe / .msi or katraineo.json Scoop manifest; Linux: .deb or .AppImage).
 - To build or develop from source, clone the repo, run `npm ci && npm run fetch:resources` (plus `scripts/build-katago-macos.sh` on macOS), and verify with `npm run typecheck && npm run lint && npm test`.
 - If KataGo fails to start on my GPU, configure KataGo's CPU (Eigen) build or help me connect a remote WebSocket KataGo engine.
 ```
@@ -20,7 +20,7 @@ Set up Katraineo (https://github.com/yongjer/katraineo) for my OS and architectu
 ## Highlights
 
 * **Fast, native desktop experience** — Built with [Tauri v2](https://v2.tauri.app/) (Rust), React, and TypeScript with crisp SVG board rendering, native file dialogs, OS file associations (`.sgf`, `.gib`, `.ngf`), single-instance file handoff, remembered window layout, and a *Recent Files* menu.
-* **Ready out of the box — local, remote, or CPU** — Bundles KataGo (`Metal` on Apple Silicon, `OpenCL` on Windows/Linux/Intel) with the `b10c384h6nbt` transformer model, connects to remote WebSocket KataGo servers with automatic reconnect & query resumption, supports custom SSH commands, and offers a one-click CPU (Eigen) fallback download on Windows and Linux.
+* **Ready out of the box — local, remote, or CPU** — Bundles KataGo (`Metal` on Apple Silicon, `OpenCL` on Windows/Linux) with the `b10c384h6nbt` transformer model, connects to remote WebSocket KataGo servers with automatic reconnect & query resumption, supports custom SSH commands, and offers a one-click CPU (Eigen) fallback download on Windows and Linux.
 * **Built-in model manager & signed auto-updates** — Download human-like, medium/large transformer (`b10c512`, `b11c768`), and latest/strongest distributed models right inside the app (with progress and cancellation), and stay up to date via signed in-app updates.
 * **Safe editing workflow** — Protects unsaved games, notes, and branches before replacing or closing, automatically saves recovery snapshots on disk, and writes files atomically with full charset detection.
 * **Focused Go training & deep analysis** — Instant point-loss feedback dots, teaching mode with automatic mistake undo, calibrated & human-like AI opponents, performance reports by game phase, tsumego frames, region-of-interest search, and insert mode.
@@ -40,14 +40,15 @@ Set up Katraineo (https://github.com/yongjer/katraineo) for my OS and architectu
 
 ## <a name="install"></a> Installation
 
-Download installers for Windows, macOS (Apple Silicon & Intel), and Linux from the
+Download installers for Windows, macOS (Apple Silicon), and Linux from the
 [latest release](https://github.com/yongjer/katraineo/releases/latest). Katraineo checks for updates on startup and
 installs verified updates from the menu (*Check for Updates*). Development test builds are also published on the
 [`tauri-nightly` prerelease](https://github.com/yongjer/katraineo/releases/tag/tauri-nightly).
 
 * **macOS**:
-  * Download `_aarch64.dmg` (Apple Silicon) or `_x64.dmg` (Intel) and drag Katraineo to Applications, or install via
-    the `katraineo.rb` Homebrew Cask attached to each release (`--no-quarantine` skips manual Gatekeeper steps).
+  * Download `_aarch64.dmg` and drag Katraineo to Applications, or install via the `katraineo.rb` Homebrew Cask attached
+    to each release (`--no-quarantine` skips manual Gatekeeper steps).
+  * Only Macs with Apple Silicon are supported. v2.1.0 is the last release with an Intel (`_x64.dmg`) build.
   * Because releases are not signed with a paid Apple Developer certificate, macOS blocks the DMG build on first launch:
     open *System Settings → Privacy & Security*, click *Open Anyway*, and confirm (on macOS 14 or earlier, right-click
     → *Open* in Finder also works). If macOS reports the app as damaged, run
@@ -63,7 +64,7 @@ installs verified updates from the menu (*Check for Updates*). Development test 
 ## <a name="kata"></a> Configuring KataGo
 
 Katraineo ships with KataGo and the `b10c384h6nbt` transformer model, using **Metal** on Apple Silicon Macs (macOS 15+)
-and **OpenCL** on Windows, Linux, and Intel Macs (macOS 11+).
+and **OpenCL** on Windows and Linux.
 
 Open *General & Engine Settings* (<kbd>F8</kbd>) to pick your engine backend:
 

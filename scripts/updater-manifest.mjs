@@ -10,14 +10,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** Every platform a release must cover. */
-export const REQUIRED_PLATFORMS = ["darwin-aarch64", "darwin-x86_64", "linux-x86_64", "windows-x86_64"];
+export const REQUIRED_PLATFORMS = ["darwin-aarch64", "linux-x86_64", "windows-x86_64"];
 
 /** The manifest keys an installer serves, from its file name. */
 export function platformsFor(name) {
-  if (name.endsWith(".app.tar.gz")) {
-    const arch = name.endsWith("_aarch64.app.tar.gz") ? "aarch64" : name.endsWith("_x64.app.tar.gz") ? "x86_64" : null;
-    return arch ? [`darwin-${arch}`, `darwin-${arch}-app`] : [];
-  }
+  // Macs with Apple Silicon only: Intel Macs are no longer built
+  if (name.endsWith("_aarch64.app.tar.gz")) return ["darwin-aarch64", "darwin-aarch64-app"];
   if (name.endsWith("-setup.exe")) return ["windows-x86_64", "windows-x86_64-nsis"];
   if (name.endsWith(".msi")) return ["windows-x86_64-msi"];
   if (name.endsWith(".AppImage")) return ["linux-x86_64", "linux-x86_64-appimage"];

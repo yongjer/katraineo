@@ -9,10 +9,8 @@ describe("distribution manifests (Homebrew Cask & Scoop)", () => {
     const dir = mkdtempSync(join(tmpdir(), "katraineo-dist-"));
     try {
       const armBytes = Buffer.from("arm64-dmg-bytes");
-      const x64Bytes = Buffer.from("x64-dmg-bytes");
       const winBytes = Buffer.from("win-setup-bytes");
       writeFileSync(join(dir, "Katraineo_2.0.0_aarch64.dmg"), armBytes);
-      writeFileSync(join(dir, "Katraineo_2.0.0_x64.dmg"), x64Bytes);
       writeFileSync(join(dir, "Katraineo_2.0.0_x64-setup.exe"), winBytes);
 
       const outDir = join(dir, "out");
@@ -25,8 +23,10 @@ describe("distribution manifests (Homebrew Cask & Scoop)", () => {
 
       const cask = readFileSync(caskPath, "utf8");
       expect(cask).toContain('version "2.0.0"');
-      expect(cask).toContain(`arm:   "${sha256Hex(armBytes)}"`);
-      expect(cask).toContain(`intel: "${sha256Hex(x64Bytes)}"`);
+      expect(cask).toContain(`sha256 "${sha256Hex(armBytes)}"`);
+      expect(cask).toContain("Katraineo_#{version}_aarch64.dmg");
+      expect(cask).toContain("depends_on arch: :arm64");
+      expect(cask).not.toMatch(/intel|x64/);
       expect(cask).toContain("--no-quarantine");
       expect(cask).toContain('app "Katraineo.app"');
 

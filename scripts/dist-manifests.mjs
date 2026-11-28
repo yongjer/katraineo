@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Generates zero-cost package manager manifests from built release artifacts:
-//   - Homebrew Cask (katraineo.rb) for macOS Apple Silicon + Intel DMGs
+//   - Homebrew Cask (katraineo.rb) for the macOS Apple Silicon DMG
 //   - Scoop manifest (katraineo.json) for Windows NSIS installer
 //
 //   node scripts/dist-manifests.mjs <release dir> <version> <owner/repo> <out dir>
@@ -15,18 +15,15 @@ export function sha256Hex(bytes) {
 }
 
 /**
- * Render a Homebrew Cask formula supporting both Apple Silicon and Intel DMGs.
- * @param {{ version: string, repo: string, arm64Sha256: string, x64Sha256: string }} opts
+ * Render a Homebrew Cask formula for the Apple Silicon DMG (Intel Macs are no longer built).
+ * @param {{ version: string, repo: string, arm64Sha256: string }} opts
  */
-export function buildHomebrewCask({ version, repo, arm64Sha256, x64Sha256 }) {
+export function buildHomebrewCask({ version, repo, arm64Sha256 }) {
   return `cask "katraineo" do
-  arch arm: "aarch64", intel: "x64"
-
   version "${version}"
-  sha256 arm:   "${arm64Sha256}",
-         intel: "${x64Sha256}"
+  sha256 "${arm64Sha256}"
 
-  url "https://github.com/${repo}/releases/download/v#{version}/Katraineo_#{version}_#{arch}.dmg"
+  url "https://github.com/${repo}/releases/download/v#{version}/Katraineo_#{version}_aarch64.dmg"
   name "Katraineo"
   desc "Go/Baduk/Weiqi analysis and training app with KataGo"
   homepage "https://github.com/${repo}"
@@ -35,6 +32,8 @@ export function buildHomebrewCask({ version, repo, arm64Sha256, x64Sha256 }) {
     url :url
     strategy :github_latest
   end
+
+  depends_on arch: :arm64
 
   app "Katraineo.app"
 
@@ -91,29 +90,26 @@ export function buildScoopManifest({ version, repo, setupName, setupSha256 }) {
 }
 
 /**
- * Scan `releaseDir` for the macOS DMGs and Windows NSIS installer, compute SHA-256 digests,
+ * Scan `releaseDir` for the macOS DMG and Windows NSIS installer, compute SHA-256 digests,
  * and write `katraineo.rb` and `katraineo.json` to `outDir`.
  * @param {{ releaseDir: string, version: string, repo: string, outDir: string }} opts
  */
 export function generateDistManifests({ releaseDir, version, repo, outDir }) {
   const names = readdirSync(releaseDir);
   const armDmg = names.find((n) => n.endsWith("_aarch64.dmg"));
-  const x64Dmg = names.find((n) => n.endsWith("_x64.dmg"));
   const winSetup = names.find((n) => n.endsWith("_x64-setup.exe"));
   const missing = [];
   if (!armDmg) missing.push("*_aarch64.dmg");
-  if (!x64Dmg) missing.push("*_x64.dmg");
   if (!winSetup) missing.push("*_x64-setup.exe");
   if (missing.length) throw new Error(`Missing release assets for manifests: ${missing.join(", ")}`);
 
   const arm64Sha256 = sha256Hex(readFileSync(join(releaseDir, armDmg)));
-  const x64Sha256 = sha256Hex(readFileSync(join(releaseDir, x64Dmg)));
   const setupSha256 = sha256Hex(readFileSync(join(releaseDir, winSetup)));
 
   mkdirSync(outDir, { recursive: true });
   const caskPath = join(outDir, "katraineo.rb");
   const scoopPath = join(outDir, "katraineo.json");
-  writeFileSync(caskPath, buildHomebrewCask({ version, repo, arm64Sha256, x64Sha256 }));
+  writeFileSync(caskPath, buildHomebrewCask({ version, repo, arm64Sha256 }));
   writeFileSync(scoopPath, buildScoopManifest({ version, repo, setupName: winSetup, setupSha256 }));
   return { caskPath, scoopPath };
 }
