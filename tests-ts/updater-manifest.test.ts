@@ -12,7 +12,6 @@ const sig = (file: string, version: string | null) =>
 const V = "2.0.0-alpha.2";
 const NAMES = [
   "Katraineo_2.0.0-alpha.2_aarch64.app.tar.gz",
-  "Katraineo_2.0.0-alpha.2_x64.app.tar.gz",
   "Katraineo_2.0.0-alpha.2_x64-setup.exe",
   "Katraineo_2.0.0_x64_en-US.msi",
   "Katraineo_2.0.0-alpha.2_amd64.AppImage",
@@ -24,12 +23,12 @@ const release = { version: V, notes: "notes", pubDate: "2026-11-24T00:00:00Z", b
 describe("the updater manifest", () => {
   it("maps each installer to the platforms it updates", () => {
     expect(platformsFor(NAMES[0])).toEqual(["darwin-aarch64", "darwin-aarch64-app"]);
-    expect(platformsFor(NAMES[1])).toEqual(["darwin-x86_64", "darwin-x86_64-app"]);
-    expect(platformsFor(NAMES[2])).toEqual(["windows-x86_64", "windows-x86_64-nsis"]);
-    expect(platformsFor(NAMES[3])).toEqual(["windows-x86_64-msi"]);
-    expect(platformsFor(NAMES[4])).toEqual(["linux-x86_64", "linux-x86_64-appimage"]);
-    expect(platformsFor(NAMES[5])).toEqual(["linux-x86_64-deb"]);
+    expect(platformsFor(NAMES[1])).toEqual(["windows-x86_64", "windows-x86_64-nsis"]);
+    expect(platformsFor(NAMES[2])).toEqual(["windows-x86_64-msi"]);
+    expect(platformsFor(NAMES[3])).toEqual(["linux-x86_64", "linux-x86_64-appimage"]);
+    expect(platformsFor(NAMES[4])).toEqual(["linux-x86_64-deb"]);
     expect(platformsFor("Katraineo_2.0.0_aarch64.dmg")).toEqual([]);
+    expect(platformsFor("Katraineo_2.0.0_x64.app.tar.gz")).toEqual([]); // Intel Macs are no longer built
     expect(platformsFor("Katraineo.app.tar.gz")).toEqual([]); // the arch must be in the name
   });
 
@@ -45,8 +44,6 @@ describe("the updater manifest", () => {
     expect(Object.keys(m.platforms).sort()).toEqual([
       "darwin-aarch64",
       "darwin-aarch64-app",
-      "darwin-x86_64",
-      "darwin-x86_64-app",
       "linux-x86_64",
       "linux-x86_64-appimage",
       "linux-x86_64-deb",
@@ -55,7 +52,7 @@ describe("the updater manifest", () => {
       "windows-x86_64-nsis",
     ]);
     expect(m.platforms["windows-x86_64"].url).toBe("https://example.com/dl/Katraineo_2.0.0-alpha.2_x64-setup.exe");
-    expect(m.platforms["linux-x86_64-deb"].signature).toBe(sig(NAMES[5], V));
+    expect(m.platforms["linux-x86_64-deb"].signature).toBe(sig(NAMES[4], V));
   });
 
   it("refuses signatures for another version, or none", () => {
@@ -66,7 +63,7 @@ describe("the updater manifest", () => {
   });
 
   it("refuses a release that misses a platform", () => {
-    const some = files().filter((f) => !f.name.includes("x64.app"));
-    expect(() => buildManifest({ ...release, files: some })).toThrow(/darwin-x86_64/);
+    const some = files().filter((f) => !f.name.includes("aarch64.app"));
+    expect(() => buildManifest({ ...release, files: some })).toThrow(/darwin-aarch64/);
   });
 });

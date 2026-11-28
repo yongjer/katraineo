@@ -93,7 +93,7 @@ code before the Prettier and rustfmt reformatting in `git blame`, run
 
 The default model (`resources/models/b10c384h6nbttflrs.bin.gz`) and the Windows/Linux KataGo binaries are not committed
 to Git; run `npm run fetch:resources` once after cloning (CI caches them per `scripts/fetch-resources.mjs`). For macOS,
-`scripts/build-katago-macos.sh` builds KataGo from source (Metal on Apple Silicon, OpenCL on Intel) with its Homebrew
+`scripts/build-katago-macos.sh` builds KataGo from source (Metal on Apple Silicon; OpenCL on Intel, which CI no longer builds) with its Homebrew
 libraries copied next to it, as CI does; run it once before `npm run tauri build` or `npm run tauri dev` on a Mac.
 Without a bundled KataGo the app falls back to one on `PATH` or in Homebrew's folders (`brew install katago`).
 
@@ -173,7 +173,7 @@ The files do not stay behind.
 
 ## Test builds
 
-Every push to `main` builds Windows, macOS (Apple Silicon and Intel) and Linux installers in CI and refreshes the
+Every push to `main` builds Windows, macOS (Apple Silicon) and Linux installers in CI and refreshes the
 [`tauri-nightly` prerelease](https://github.com/yongjer/katraineo/releases/tag/tauri-nightly) with them.
 These are unsigned test builds.
 

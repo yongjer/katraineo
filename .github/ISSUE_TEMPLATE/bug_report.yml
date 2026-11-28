@@ -31,7 +31,6 @@ body:
       options:
         - Windows
         - macOS (Apple Silicon)
-        - macOS (Intel)
         - Linux (AppImage)
         - Linux (.deb)
         - Other

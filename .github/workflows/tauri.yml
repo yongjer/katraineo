@@ -71,8 +71,8 @@ jobs:
             done < <(git diff --name-only HEAD^1 HEAD)
           fi
           platforms='["windows-latest", "ubuntu-22.04"'
-          # Apple Silicon (KataGo with Metal) and Intel (KataGo with OpenCL)
-          if [ "$macos" = true ]; then platforms+=", \"$MACOS_RUNNER\", \"macos-15-intel\""; fi
+          # Apple Silicon only (KataGo with Metal): Intel Macs are no longer built
+          if [ "$macos" = true ]; then platforms+=", \"$MACOS_RUNNER\""; fi
           platforms+="]"
           echo "platforms=$platforms" | tee -a "$GITHUB_OUTPUT"
       - uses: actions/setup-node@v5
@@ -277,7 +277,8 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "$katago failed: $LASTEXITCODE" }
           }
       # What the updater installs on macOS: the app bundle as a .tar.gz with Katraineo.app at the top, named after the
-      # architecture since both Macs build one. COPYFILE_DISABLE and --no-mac-metadata keep AppleDouble files out.
+      # architecture (scripts/updater-manifest.mjs reads it from the name). COPYFILE_DISABLE and --no-mac-metadata keep
+      # AppleDouble files out.
       - name: Pack the app for the updater
         if: startsWith(matrix.platform, 'macos') && needs.test.outputs.sign == 'true'
         run: |
@@ -528,7 +529,7 @@ jobs:
           cat > notes.md <<NOTES
           ## Install
 
-          * **macOS**: \`Katraineo_${VERSION}_aarch64.dmg\` (Apple Silicon) or \`Katraineo_${VERSION}_x64.dmg\` (Intel). The app is
+          * **macOS** (Apple Silicon): \`Katraineo_${VERSION}_aarch64.dmg\`. The app is
             not signed by Apple, so macOS blocks it the first time it is opened: then go to System Settings → Privacy &
             Security and click *Open Anyway* (on macOS 14 or earlier, right click → Open in Finder works as well). If macOS
             says instead that Katraineo is damaged, run \`xattr -dr com.apple.quarantine /Applications/Katraineo.app\`.
