@@ -19,6 +19,7 @@ export {
   refresh,
   setStatus,
   type DialogKind,
+  type FocusMode,
   type LogEntry,
   type State,
   type Status,
@@ -28,10 +29,12 @@ export {
 export { clearStatus, getEngine, restartEngine } from "./engineState";
 export { clearRecentFiles, setPlayer, toggleControl, updateConfig } from "./configState";
 export {
+  cycleFocusMode,
   finishRegionSelect,
   openDialog,
   requestCloseDialog,
   setDialogCloseGuard,
+  setFocusMode,
   setMode,
   setRegionOfInterest,
   startRegionSelect,

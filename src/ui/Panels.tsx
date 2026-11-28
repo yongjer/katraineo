@@ -13,7 +13,7 @@ import {
 } from "../core/constants";
 import { t } from "../core/i18n";
 import { openDialog, setNote, setPlayer, useStore } from "../state/store";
-import { THEME, evalColor } from "./theme";
+import { evalColor } from "./theme";
 
 export function PlayersPanel() {
   const players = useStore((s) => s.config.ui.players);
@@ -104,19 +104,19 @@ export function StatsPanel() {
     <div className="stats panel">
       <div className="stat">
         <span className="stat-label">{t("stats:winrate")}</span>
-        <span className="stat-value" style={{ color: THEME.winrate }}>
+        <span className="stat-value" style={{ color: "var(--winrate)" }}>
           {cn.formatWinrate() ?? "…"}
         </span>
       </div>
       <div className="stat">
         <span className="stat-label">{t("stats:score")}</span>
-        <span className="stat-value" style={{ color: THEME.score }}>
+        <span className="stat-value" style={{ color: "var(--score)" }}>
           {cn.formatScore() ?? "…"}
         </span>
       </div>
       <div className="stat">
         <span className="stat-label">{pl !== null && pl < 0 ? t("stats:pointsgained") : t("stats:pointslost")}</span>
-        <span className="stat-value" style={{ color: col ?? THEME.pointLoss }}>
+        <span className="stat-value" style={{ color: col ?? "var(--points-lost)" }}>
           {pl !== null ? `${cn.move?.player ?? ""} ${Math.abs(pl).toFixed(1)}` : "…"}
         </span>
       </div>

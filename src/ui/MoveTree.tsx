@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { GameNode } from "../core/gameNode";
 import { t } from "../core/i18n";
 import { editTree, goTo, useStore, type TreeEdit } from "../state/store";
-import { IS_MAC, MOD_KEY } from "./theme";
+import { useShortcutLabels } from "./shortcuts";
 
 const SIZE = 22; // node diameter in px
 const GAP = 5;
@@ -111,6 +111,7 @@ export function MoveTree() {
   const tick = useStore((s) => s.tick);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<{ node: GameNode; x: number; y: number } | null>(null);
+  const key = useShortcutLabels();
   const [view, setView] = useState<TreeViewport>({ left: 0, top: 0, width: 1000, height: 1000 });
 
   // oxlint-disable-next-line react-hooks/exhaustive-deps -- the game changes in place: tick counts its changes
@@ -236,18 +237,15 @@ export function MoveTree() {
         >
           <button className="menu-item" onClick={() => act("delete")}>
             <span>{t("Delete Node")}</span>
-            <kbd>
-              {MOD_KEY}
-              {IS_MAC ? "⌫" : "Del"}
-            </kbd>
+            {key("delete-node") && <kbd>{key("delete-node")}</kbd>}
           </button>
           <button className="menu-item" onClick={() => act("main")}>
             <span>{t("Make Main Branch")}</span>
-            <kbd>PgUp</kbd>
+            {key("main-branch") && <kbd>{key("main-branch")}</kbd>}
           </button>
           <button className="menu-item" onClick={() => act("collapse")}>
             <span>{t("Toggle Collapse Branch")}</span>
-            <kbd>C</kbd>
+            {key("collapse") && <kbd>{key("collapse")}</kbd>}
           </button>
           <button className="menu-item" onClick={() => act("prune")}>
             <span>{t("Prune Branch")}</span>

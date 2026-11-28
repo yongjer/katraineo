@@ -1,10 +1,11 @@
 // Visual constants, ported from katrain/gui/theme.py.
 
+import { useEffect } from "react";
 import { evaluationClass } from "../core/utils";
+import type { AppearanceSettings } from "../state/config";
+import { useStore } from "../state/store";
 
-export const IS_MAC = navigator.platform.startsWith("Mac");
-/** How the menus show the shortcut modifier. The key handler takes Ctrl or Cmd everywhere. */
-export const MOD_KEY = IS_MAC ? "⌘" : "Ctrl+";
+export const IS_MAC = typeof navigator !== "undefined" && navigator.platform.startsWith("Mac");
 
 export const EVAL_COLORS: Record<string, string[]> = {
   "theme:normal": ["#72216b", "#cc0000", "#e6661a", "#f2f200", "#abe62e", "#1e9600"],
@@ -50,4 +51,31 @@ export function evalColor(
 
 export function gtpColumn(x: number): string {
   return "ABCDEFGHJKLMNOPQRSTUVWXYZ"[x] ?? String(x + 1);
+}
+
+// ---------------------------------------------------------------- appearance (Settings → Appearance)
+export const UI_THEMES: AppearanceSettings["theme"][] = ["dark", "light", "system"];
+export const BOARD_STYLES: AppearanceSettings["board"][] = ["classic", "wood", "light", "gray"];
+export const STONE_STYLES: AppearanceSettings["stones"][] = ["classic", "slate-shell", "flat"];
+
+/** The appearance settings, with unknown values (from a hand-edited config) replaced by the defaults. */
+export function appearanceOf(a: Partial<AppearanceSettings> | undefined): AppearanceSettings {
+  const pick = <T extends string>(v: T | undefined, options: T[]): T => (v && options.includes(v) ? v : options[0]);
+  return {
+    theme: pick(a?.theme, UI_THEMES),
+    board: pick(a?.board, BOARD_STYLES),
+    stones: pick(a?.stones, STONE_STYLES),
+  };
+}
+
+/** Apply the UI theme and board style: styles.css picks its colors by these attributes of the root element. */
+export function useAppearance() {
+  const appearance = useStore((s) => s.config.ui.appearance);
+  useEffect(() => {
+    const { theme, board, stones } = appearanceOf(appearance);
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.dataset.board = board;
+    root.dataset.stones = stones;
+  }, [appearance]);
 }

@@ -1,4 +1,5 @@
-/* KaTrain's dark blue palette (katrain/gui/theme.py) */
+/* KaTrain's dark blue palette (katrain/gui/theme.py). The other themes (Settings → Appearance) change these colors:
+   they follow the root element's data-theme, data-board and data-stones (src/ui/theme.ts). */
 :root {
   --bg: #24303e;
   --box: #2e4158;
@@ -6,10 +7,24 @@
   --text: #f2f2f2;
   --muted: #a9b4c2;
   --accent: #e5e51a;
+  /* the accent as the color of text, which must stay readable on the background */
+  --accent-text: var(--accent);
   --orange: #f26022;
   --danger: #cc1a1a;
+  --error-text: #ff7a7a;
   --score: #4db3e6;
   --winrate: #1acc1a;
+  --points-lost: #cccc1a;
+  --graph-b: #2a3a4f;
+  --graph-w: #33475f;
+  --graph-mid: #5a6f88;
+  --tree-line: #b3b3b3;
+  /* the board */
+  --board: #d9ad66;
+  /* behind the text of hints, where it covers the lines */
+  --board-approx: #f2bf78;
+  --board-line: #000;
+  --board-coord: #3a2a12;
   --radius: 6px;
   color-scheme: dark;
   font-family:
@@ -23,6 +38,70 @@
   font-size: 14px;
   color: var(--text);
   background: var(--bg);
+}
+
+/* light UI */
+:root[data-theme="light"] {
+  --bg: #e8ecf1;
+  --box: #fbfcfd;
+  --box-light: #c7d0db;
+  --text: #1b2430;
+  --muted: #566273;
+  --accent: #e5d81a;
+  --accent-text: #6f6400;
+  --orange: #d0501a;
+  --danger: #c62828;
+  --error-text: #c62828;
+  --score: #1f78b0;
+  --winrate: #13861b;
+  --points-lost: #8a8a00;
+  --graph-b: #d9e1ea;
+  --graph-w: #eef2f6;
+  --graph-mid: #9aabbd;
+  --tree-line: #7d8a98;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+    --bg: #e8ecf1;
+    --box: #fbfcfd;
+    --box-light: #c7d0db;
+    --text: #1b2430;
+    --muted: #566273;
+    --accent: #e5d81a;
+    --accent-text: #6f6400;
+    --orange: #d0501a;
+    --danger: #c62828;
+    --error-text: #c62828;
+    --score: #1f78b0;
+    --winrate: #13861b;
+    --points-lost: #8a8a00;
+    --graph-b: #d9e1ea;
+    --graph-w: #eef2f6;
+    --graph-mid: #9aabbd;
+    --tree-line: #7d8a98;
+    color-scheme: light;
+  }
+}
+
+/* boards */
+:root[data-board="wood"] {
+  --board: #d8ac6a;
+  --board-approx: #ecc88c;
+}
+
+:root[data-board="light"] {
+  --board: #ecd5a4;
+  --board-approx: #f8e8c4;
+  --board-coord: #5a4626;
+}
+
+:root[data-board="gray"] {
+  --board: #bdbdb5;
+  --board-approx: #dadad2;
+  --board-line: #1e1e1e;
+  --board-coord: #2e2e2e;
 }
 
 * {
@@ -167,7 +246,7 @@ kbd {
 }
 
 .toggle .check {
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 10px;
 }
 
@@ -255,28 +334,49 @@ kbd {
 }
 
 .board-bg {
-  fill: #d9ad66;
+  fill: var(--board);
+}
+
+.hint-bg {
+  fill: var(--board-approx);
 }
 
 .grid line {
-  stroke: #000;
+  stroke: var(--board-line);
   stroke-width: 0.03;
   stroke-linecap: square;
 }
 
 .stars circle {
-  fill: #000;
+  fill: var(--board-line);
 }
 
 .coord {
   font-size: 0.36px;
-  fill: #3a2a12;
+  fill: var(--board-coord);
   text-anchor: middle;
   dominant-baseline: central;
 }
 
 .stone {
   filter: url(#stone-shadow);
+}
+
+/* flat stones: no shadow, and a clearer edge on white */
+:root[data-stones="flat"] .stone {
+  filter: none;
+}
+
+:root[data-stones="flat"] .stone-W {
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 0.025;
+}
+
+.shell-line {
+  fill: none;
+  stroke: #b4ad97;
+  stroke-width: 0.012;
+  stroke-opacity: 0.55;
 }
 
 .stone-W {
@@ -513,11 +613,11 @@ kbd {
 }
 
 .player-rank {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .thinking {
-  color: var(--accent);
+  color: var(--accent-text);
   animation: blink 1s infinite;
 }
 
@@ -577,15 +677,15 @@ kbd {
 }
 
 .graph-bg-b {
-  fill: #2a3a4f;
+  fill: var(--graph-b);
 }
 
 .graph-bg-w {
-  fill: #33475f;
+  fill: var(--graph-w);
 }
 
 .graph-mid {
-  stroke: #5a6f88;
+  stroke: var(--graph-mid);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
@@ -595,6 +695,14 @@ kbd {
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
   stroke-linejoin: round;
+}
+
+.graph-line.winrate {
+  stroke: var(--winrate);
+}
+
+.graph-line.score {
+  stroke: var(--score);
 }
 
 .graph-cursor {
@@ -695,7 +803,7 @@ kbd {
 }
 
 .nav-button.mistake {
-  color: #f07070;
+  color: var(--error-text);
   font-size: 13px;
 }
 
@@ -714,11 +822,11 @@ kbd {
 }
 
 .status.error {
-  color: #ff7a7a;
+  color: var(--error-text);
 }
 
 .status.teaching {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .engine-dot {
@@ -780,7 +888,7 @@ kbd {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .field {
@@ -842,7 +950,7 @@ kbd {
 
 .engine-fallback-error {
   width: 100%;
-  color: #ff7a7a;
+  color: var(--error-text);
 }
 
 .download-inline {
@@ -924,7 +1032,7 @@ button.primary:disabled {
 }
 
 .log-error {
-  color: #ff7a7a;
+  color: var(--error-text);
 }
 
 .log-stderr {
@@ -955,7 +1063,7 @@ button.primary:disabled {
 
 .tree-line {
   fill: none;
-  stroke: #b3b3b3;
+  stroke: var(--tree-line);
   stroke-width: 1;
 }
 
@@ -1067,11 +1175,11 @@ button.primary:disabled {
 }
 
 .download.error {
-  color: #ff7a7a;
+  color: var(--error-text);
 }
 
 .warning {
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 12px;
   margin: 0;
 }
@@ -1105,7 +1213,7 @@ button.primary:disabled {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 34px;
   font-weight: 600;
-  color: #1acc1a;
+  color: var(--winrate);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
@@ -1122,7 +1230,7 @@ button.primary:disabled {
 .timer-periods {
   font-family: ui-monospace, Menlo, monospace;
   font-size: 16px;
-  color: #1acc1a;
+  color: var(--winrate);
   align-self: flex-start;
   margin-top: 8px;
 }
@@ -1241,7 +1349,7 @@ button.primary:disabled {
   padding: 4px 10px;
   border: 1px solid var(--accent);
   border-radius: var(--radius);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -1294,4 +1402,101 @@ button.primary:disabled {
 
 .update-error {
   color: var(--orange);
+}
+
+/* ------------------------------------------------------------ focus modes (~ / F12) */
+.app.focus-2 {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.focus-controls {
+  position: fixed;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+  z-index: 5;
+}
+
+.focus-controls:hover,
+.focus-controls:focus-within {
+  opacity: 1;
+}
+
+.focus-controls .icon-button {
+  background: var(--box);
+  border: 1px solid var(--box-light);
+}
+
+/* ------------------------------------------------------------ keyboard shortcuts dialog */
+.shortcuts-group {
+  margin: 12px 0 4px;
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--box-light);
+}
+
+.shortcut-row.changed .shortcut-name {
+  font-weight: 600;
+}
+
+.shortcut-keys {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.shortcut-key kbd {
+  font-size: 12px;
+  color: var(--text);
+  padding: 1px 6px;
+}
+
+.shortcut-key button,
+.shortcut-add,
+.shortcut-reset {
+  color: var(--muted);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.shortcut-key button:hover,
+.shortcut-add:hover,
+.shortcut-reset:hover {
+  color: var(--text);
+  background: var(--box-light);
+}
+
+.shortcut-capture {
+  font-size: 12px;
+  color: var(--accent-text);
+  border: 1px dashed var(--accent);
+  border-radius: 3px;
+  padding: 0 6px;
+}
+
+.shortcut-note {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--orange);
+}
+
+.shortcuts-filter {
+  width: 100%;
 }

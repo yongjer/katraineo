@@ -3,7 +3,6 @@
 import { useMemo, useRef } from "react";
 import { t } from "../core/i18n";
 import { goTo, updateConfig, useStore } from "../state/store";
-import { THEME } from "./theme";
 
 const W = 1000;
 const H = 300;
@@ -83,8 +82,8 @@ export function Graph() {
         <rect x={0} y={0} width={W} height={H / 2} className="graph-bg-b" />
         <rect x={0} y={H / 2} width={W} height={H / 2} className="graph-bg-w" />
         <line x1={0} y1={H / 2} x2={W} y2={H / 2} className="graph-mid" />
-        {show.winrate && <path d={winratePath} stroke={THEME.winrate} className="graph-line" />}
-        {show.score && <path d={scorePath} stroke={THEME.score} className="graph-line" />}
+        {show.winrate && <path d={winratePath} className="graph-line winrate" />}
+        {show.score && <path d={scorePath} className="graph-line score" />}
         {current >= 0 && <line x1={x(current)} y1={0} x2={x(current)} y2={H} className="graph-cursor" />}
       </svg>
       <div className="graph-footer">

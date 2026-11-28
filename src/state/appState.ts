@@ -30,7 +30,11 @@ export type DialogKind =
   | "reanalyze"
   | "update"
   | "unsaved"
-  | "recovery";
+  | "recovery"
+  | "shortcuts";
+
+/** Focus modes (~ / F12): 0 shows everything, 1 hides the side panels, 2 shows only the board. */
+export type FocusMode = 0 | 1 | 2;
 
 /** Updates of the app itself: `checking` and `latest` only follow a check from the menu. */
 export interface UpdateState {
@@ -75,6 +79,7 @@ export interface State {
   dirty: boolean;
   /** SGF recovered from a previous session's autosave, waiting for user confirmation. */
   recoverySgf: string | null;
+  focusMode: FocusMode;
 }
 
 export const useStore = create<State>(() => ({
@@ -95,6 +100,7 @@ export const useStore = create<State>(() => ({
   update: { phase: "idle", currentVersion: "", info: null, progress: null, error: null },
   dirty: false,
   recoverySgf: null,
+  focusMode: 0,
 }));
 
 export const get = useStore.getState;

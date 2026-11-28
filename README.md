@@ -152,6 +152,7 @@ Deep analysis & study actions (*Analysis Options*):
 
 | Key / Action | Description |
 | --- | --- |
+| <kbd>`</kbd> / <kbd>~</kbd> / <kbd>F12</kbd> | Focus mode: hide the side panels, then everything but the board, then show all again |
 | <kbd>k</kbd> | Toggle board coordinates |
 | <kbd>m</kbd> | Toggle move numbers |
 | <kbd>p</kbd> | Pass |
@@ -173,6 +174,11 @@ Deep analysis & study actions (*Analysis Options*):
 | <kbd>Ctrl</kbd> + <kbd>c</kbd> | Copy the current game as SGF to the clipboard |
 
 On macOS, <kbd>Cmd</kbd> works wherever this table lists <kbd>Ctrl</kbd>.
+
+Every keyboard shortcut can be changed under *Keyboard Shortcuts* in the main menu (<kbd>Ctrl</kbd> + <kbd>/</kbd>):
+give an action more keys, remove them, or reset them. A key given to one action is taken from any other that had it.
+The UI theme (KaTrain's dark blue, light, or the system's), the board (classic, wood grain, light wood, gray) and the
+stones (classic, slate and shell, flat) are under *Appearance* in *General & Engine Settings* (<kbd>F8</kbd>).
 
 ## <a name="agentic"></a> For Agentic AI Users & Automation
 

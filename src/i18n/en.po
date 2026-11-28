@@ -1355,3 +1355,121 @@ msgstr "Local KataGo failed to start. Try downloading the CPU (Eigen) build inst
 
 msgid "engine:cpu-fallback:button"
 msgstr "Download CPU (Eigen) KataGo"
+
+#. appearance, focus modes & keyboard shortcuts
+msgid "appearance"
+msgstr "Appearance"
+
+msgid "appearance:theme"
+msgstr "Theme"
+
+msgid "appearance:theme:dark"
+msgstr "Dark blue (KaTrain)"
+
+msgid "appearance:theme:light"
+msgstr "Light"
+
+msgid "appearance:theme:system"
+msgstr "Same as the system"
+
+msgid "appearance:board"
+msgstr "Board"
+
+msgid "appearance:board:classic"
+msgstr "Classic"
+
+msgid "appearance:board:wood"
+msgstr "Wood grain"
+
+msgid "appearance:board:light"
+msgstr "Light wood"
+
+msgid "appearance:board:gray"
+msgstr "Gray"
+
+msgid "appearance:stones"
+msgstr "Stones"
+
+msgid "appearance:stones:classic"
+msgstr "Classic"
+
+msgid "appearance:stones:slate-shell"
+msgstr "Slate and shell"
+
+msgid "appearance:stones:flat"
+msgstr "Flat"
+
+msgid "focus:more"
+msgstr "Next focus mode"
+
+msgid "focus:exit"
+msgstr "Leave focus mode"
+
+msgid "menu:shortcuts"
+msgstr "Keyboard Shortcuts"
+
+msgid "shortcuts:group:file"
+msgstr "Files and settings"
+
+msgid "shortcuts:group:navigate"
+msgstr "Navigation"
+
+msgid "shortcuts:group:analyze"
+msgstr "Analysis"
+
+msgid "shortcuts:group:view"
+msgstr "View"
+
+msgid "shortcuts:group:edit"
+msgstr "Editing"
+
+msgid "shortcuts:filter"
+msgstr "Search actions or keys"
+
+msgid "shortcuts:add"
+msgstr "Add a key"
+
+msgid "shortcuts:remove"
+msgstr "Remove {key}"
+
+msgid "shortcuts:reset"
+msgstr "Reset to the default keys"
+
+msgid "shortcuts:reset-all"
+msgstr "Reset all"
+
+msgid "shortcuts:done"
+msgstr "Done"
+
+msgid "shortcuts:press"
+msgstr "Press a key… (Esc cancels)"
+
+msgid "shortcuts:moved"
+msgstr "Taken from: {actions}"
+
+msgid "shortcuts:mode"
+msgstr "Switch between Play and Analysis"
+
+msgid "shortcuts:coordinates"
+msgstr "Show coordinates"
+
+msgid "shortcuts:focus"
+msgstr "Focus mode"
+
+msgid "shortcuts:pause-timer"
+msgstr "Pause the clock"
+
+msgid "nav:branch-up"
+msgstr "Branch above"
+
+msgid "nav:branch-down"
+msgstr "Branch below"
+
+msgid "nav:branch-point"
+msgstr "Back to the branching point"
+
+msgid "nav:main-branch-point"
+msgstr "Back to the main branch"
+
+msgid "analysis:stop"
+msgstr "Stop analysis"
