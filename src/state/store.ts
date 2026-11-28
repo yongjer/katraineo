@@ -9,6 +9,7 @@
 //   files.ts        new games, loading, saving, the clipboard, unsaved changes and autosave
 //   moves.ts        playing, navigating, editing the move tree, notes, insert mode
 //   analysis.ts     extra analysis, pondering, PVs, self-play, set up position, tsumego frame
+//   setup.ts        the position editor: setup stones, the player to move, markup
 //   trainer.ts      what runs after every change: teaching undos, AI moves, pondering
 //   timer.ts        the game clock
 //   updates.ts      updates of the app
@@ -21,6 +22,7 @@ export {
   type DialogKind,
   type FocusMode,
   type LogEntry,
+  type SetupTool,
   type State,
   type Status,
   type TimerState,
@@ -58,6 +60,16 @@ export {
   resolveUnsaved,
   saveGame,
 } from "./files";
+export {
+  SETUP_TOOLS,
+  editAt,
+  editsInPlace,
+  finishSetup,
+  setSetupTool,
+  startSetup,
+  togglePlayerToMove,
+  toggleSetup,
+} from "./setup";
 export {
   editTree,
   findMistake,

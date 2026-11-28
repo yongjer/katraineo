@@ -1404,3 +1404,62 @@ msgstr "回到主分支"
 
 msgid "analysis:stop"
 msgstr "停止分析"
+
+#. position editor (menu item, toolbar title, shortcut)
+msgid "setup:title"
+msgstr "編輯局面"
+
+msgid "setup:black"
+msgstr "黑子"
+
+msgid "setup:white"
+msgstr "白子"
+
+msgid "setup:erase"
+msgstr "移除棋子"
+
+msgid "setup:triangle"
+msgstr "三角形"
+
+msgid "setup:square"
+msgstr "方形"
+
+msgid "setup:circle"
+msgstr "圓形"
+
+msgid "setup:cross"
+msgstr "叉號"
+
+msgid "setup:letters"
+msgstr "標籤 A、B、C"
+
+msgid "setup:numbers"
+msgstr "標籤 1、2、3"
+
+#. followed by a stone and the color, e.g. 'To play ● Black'
+msgid "setup:to-play"
+msgstr "輪到"
+
+msgid "setup:to-play-hint"
+msgstr "切換輪到哪一方下"
+
+msgid "setup:black-short"
+msgstr "黑"
+
+msgid "setup:white-short"
+msgstr "白"
+
+msgid "setup:done"
+msgstr "完成"
+
+msgid "setup:new-node"
+msgstr "棋子會放在這一手之後的新節點"
+
+msgid "setup:status"
+msgstr "點擊放上棋子或標記，再點一次移除。右鍵：另一種顏色，或清除標記。數字鍵 1-9 選工具，Esc 結束。"
+
+msgid "setup:illegal"
+msgstr "無法這樣擺：棋局中之後的某一手會變成不合法。"
+
+msgid "setup:not-in-insert-mode"
+msgstr "請先結束插入模式（i），再編輯局面。"

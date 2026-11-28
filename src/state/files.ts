@@ -130,7 +130,7 @@ function startGame(game: Game, mode: UiMode, opts: { keepAutosave?: boolean } = 
   const old = get().game;
   if (old) old.active = false;
   resetTimer();
-  set({ game, mode, pondering: false, dirty: false });
+  set({ game, mode, pondering: false, dirty: false, setupTool: null });
   if (!opts.keepAutosave) void clearAutosaveNow();
   syncWindowTitle(game, false);
   clearStatus();

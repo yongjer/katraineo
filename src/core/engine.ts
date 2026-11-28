@@ -3,6 +3,7 @@
 // the WebSocket to a remote engine; this class owns query bookkeeping, priorities, pondering, result dispatch
 // and reconnecting to a remote engine.
 
+import { Board, IllegalMoveException, suicideAllowed } from "./board";
 import { PONDERING_REPORT_DT, type Player } from "./constants";
 import type { GameNode, KataGoResponse } from "./gameNode";
 import { t, tf } from "./i18n";
@@ -353,12 +354,24 @@ export class KataGoEngine {
 
   requestAnalysis(node: GameNode, req: AnalysisRequest) {
     const nodes = node.nodesFromRoot;
-    const moves = nodes.flatMap((n) => n.moves);
-    const initialStones = nodes.flatMap((n) => n.placements);
-    if (nodes.some((n) => n.clearPlacements.length)) {
-      this.log(`Not analyzing node ${node.id} as there are AE commands in the path`, "debug");
+    // KataGo starts from the position at the last node that sets up stones (AB, AW, AE), rather than replaying
+    // the game before it: setup stones can go where stones were captured, or take stones off the board.
+    let start = nodes.length - 1;
+    while (start > 0 && !nodes[start].placements.length && !nodes[start].clearPlacements.length) start--;
+    const setupNode = nodes[start];
+    let initialStones: Move[];
+    try {
+      const rules = getRules(node.ruleset);
+      const position = Board.after(node.boardSize, nodes.slice(0, start), () => suicideAllowed(rules));
+      position.applySetup(setupNode);
+      initialStones = position.stones;
+    } catch (e) {
+      if (!(e instanceof IllegalMoveException)) throw e;
+      this.log(`Not analyzing node ${node.id}: ${e.message} before it`, "debug");
       return;
     }
+    const moves = nodes.slice(start).flatMap((n) => n.moves);
+    const initialPlayer = start === 0 ? node.initialPlayer : (setupNode.moves[0]?.player ?? setupNode.nextPlayer);
     const nextMove = req.nextMove ?? null;
     if (nextMove) moves.push(nextMove);
     const ownership = req.ownership ?? (this.settings._enable_ownership && !nextMove);
@@ -401,7 +414,7 @@ export class KataGoEngine {
       includeMovesOwnership: ownership && !nextMove,
       includePolicy: req.includePolicy ?? true,
       initialStones: initialStones.map((m) => [m.player, m.gtp()]),
-      initialPlayer: node.initialPlayer,
+      initialPlayer,
       moves: moves.map((m) => [m.player, m.gtp()]),
       overrideSettings: { ...settings, ...req.extraSettings },
       [PONDER_KEY]: req.ponder ?? false,

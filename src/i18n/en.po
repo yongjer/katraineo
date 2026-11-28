@@ -1473,3 +1473,62 @@ msgstr "Back to the main branch"
 
 msgid "analysis:stop"
 msgstr "Stop analysis"
+
+#. position editor (menu item, toolbar title, shortcut)
+msgid "setup:title"
+msgstr "Edit Position"
+
+msgid "setup:black"
+msgstr "Black stone"
+
+msgid "setup:white"
+msgstr "White stone"
+
+msgid "setup:erase"
+msgstr "Remove stone"
+
+msgid "setup:triangle"
+msgstr "Triangle"
+
+msgid "setup:square"
+msgstr "Square"
+
+msgid "setup:circle"
+msgstr "Circle"
+
+msgid "setup:cross"
+msgstr "Cross"
+
+msgid "setup:letters"
+msgstr "Label A, B, C"
+
+msgid "setup:numbers"
+msgstr "Label 1, 2, 3"
+
+#. followed by a stone and the color, e.g. 'To play ● Black'
+msgid "setup:to-play"
+msgstr "To play"
+
+msgid "setup:to-play-hint"
+msgstr "Switch who plays next"
+
+msgid "setup:black-short"
+msgstr "Black"
+
+msgid "setup:white-short"
+msgstr "White"
+
+msgid "setup:done"
+msgstr "Done"
+
+msgid "setup:new-node"
+msgstr "Stones go into a new node after this move"
+
+msgid "setup:status"
+msgstr "Click to place a stone or mark, again to take it off. Right click: the other color, or erase the mark. Keys 1-9 choose a tool, Esc ends."
+
+msgid "setup:illegal"
+msgstr "Not possible: a later move in the game would no longer be legal."
+
+msgid "setup:not-in-insert-mode"
+msgstr "Finish inserting moves (i) before editing the position."
