@@ -1,9 +1,10 @@
 // The move tree, ported from katrain/gui/widgets/movetree.py: one column per move, one row per branch.
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { GameNode } from "../core/gameNode";
 import { t } from "../core/i18n";
 import { editTree, goTo, useStore, type TreeEdit } from "../state/store";
+import { ContextMenu } from "./ContextMenu";
 import { useShortcutLabels } from "./shortcuts";
 
 const SIZE = 22; // node diameter in px
@@ -151,16 +152,7 @@ export function MoveTree() {
     };
   }, [hasTree]); // the scroll element is rendered once there is a game
 
-  useEffect(() => {
-    if (!menu) return;
-    const close = () => setMenu(null);
-    window.addEventListener("mousedown", close);
-    window.addEventListener("blur", close);
-    return () => {
-      window.removeEventListener("mousedown", close);
-      window.removeEventListener("blur", close);
-    };
-  }, [menu]);
+  const closeMenu = useCallback(() => setMenu(null), []);
 
   if (!game || !layout) return null;
   const { width, height } = layout;
@@ -230,11 +222,7 @@ export function MoveTree() {
         </svg>
       </div>
       {menu && (
-        <div
-          className="tree-menu dropdown"
-          style={{ left: menu.x, top: menu.y }}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
+        <ContextMenu x={menu.x} y={menu.y} onClose={closeMenu}>
           <button className="menu-item" onClick={() => act("delete")}>
             <span>{t("Delete Node")}</span>
             {key("delete-node") && <kbd>{key("delete-node")}</kbd>}
@@ -250,7 +238,7 @@ export function MoveTree() {
           <button className="menu-item" onClick={() => act("prune")}>
             <span>{t("Prune Branch")}</span>
           </button>
-        </div>
+        </ContextMenu>
       )}
     </div>
   );

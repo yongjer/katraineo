@@ -1,6 +1,6 @@
 // The go board, ported from katrain/gui/badukpan.py. Drawn as SVG in board units: one grid cell = 1.
 
-import { memo, useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   MODE_PLAY,
   PLAYER_AI,
@@ -13,10 +13,13 @@ import {
   type Player,
 } from "../core/constants";
 import { GameNode, type CandidateMove, type Markup } from "../core/gameNode";
-import { t } from "../core/i18n";
+import { t, tf } from "../core/i18n";
 import { Move, type Coords } from "../core/move";
 import { formatVisits, varToGrid } from "../core/utils";
 import { addPvToTree, editAt, finishRegionSelect, playAt, useStore } from "../state/store";
+import { ContextMenu } from "./ContextMenu";
+import { previewPv, shownMoves, usePvPreview, wheelPvDepth } from "./pvPreview";
+import { useShortcutLabels } from "./shortcuts";
 import type { AppearanceSettings } from "../state/config";
 import { EVAL_COLORS, THEME, appearanceOf, evalColor, gtpColumn } from "./theme";
 import { woodTexture } from "./woodTexture";
@@ -54,6 +57,15 @@ export function Board() {
   const shell = stoneStyle === "slate-shell";
   const [box, setBox] = useState<[number, number, number, number] | null>(null);
   const justSelected = useRef(false); // the click that ends a region selection must not play a stone
+  const [boardMenu, setBoardMenu] = useState<{
+    x: number;
+    y: number;
+    coords: Coords;
+    pv: string[];
+    shown: number;
+  } | null>(null);
+  const closeBoardMenu = useCallback(() => setBoardMenu(null), []);
+  const key = useShortcutLabels();
 
   const toggles = config.ui[mode];
   const trainer = config.trainer;
@@ -364,15 +376,50 @@ export function Board() {
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- the game changes in place: tick counts its changes
   }, [game, tick, toggles, trainer, theme, config.ui.players, config.trainer.show_move_numbers, teachingStatus, shell]);
 
-  if (!game || !content) return <div className="board-wrap" />;
-  const { layers, hintTargets, sx, sy, py, stoneGrid, endResult, nextPlayer } = content;
-  const cn = game.currentNode;
-
   // hover: PV preview over a hint / next move, otherwise a ghost stone
   // (while editing the position: the stone the tool puts down)
-  const hoverTarget =
-    !setupTool && hover && hintTargets.find((h) => h.coords[0] === hover[0] && h.coords[1] === hover[1]);
-  const pv: PvOverlay | null = hoverTarget ? { moves: hoverTarget.pv, startPlayer: nextPlayer } : null;
+  const cn = game?.currentNode ?? null;
+  const targetAt = (c: Coords | null) =>
+    (c && content?.hintTargets.find((h) => h.coords[0] === c[0] && h.coords[1] === c[1])) || null;
+  const pvKey = (c: Coords) => `${cn?.id}:${c[0]},${c[1]}`;
+  // (while the menu of a move is open, its variation stays shown)
+  const hoverTarget = setupTool ? null : targetAt(boardMenu ? boardMenu.coords : hover);
+  const previewKey = hoverTarget ? pvKey(hoverTarget.coords) : null;
+  const previewLength = hoverTarget?.pv.length ?? 0;
+  useEffect(() => previewPv(previewKey, previewLength), [previewKey, previewLength]);
+  const depth = usePvPreview((s) => (s.target === previewKey ? s.depth : null));
+  const shown = shownMoves(previewLength, depth);
+  /** The moves of the variation at a point, as many as are shown. */
+  const shownPv = (c: Coords): string[] | null => {
+    const target = targetAt(c);
+    if (!target) return null;
+    const preview = usePvPreview.getState();
+    return target.pv.slice(0, preview.target === pvKey(c) ? shownMoves(target.pv.length, preview.depth) : undefined);
+  };
+
+  // Scrolling over a previewed move shows more or fewer of its moves, once the mouse has moved onto it at this node:
+  // scrolling through the game must not stop when a top move of the next position happens to be under the mouse.
+  const movedAt = useRef<GameNode | null>(null);
+  const previewing = useRef(false);
+  useLayoutEffect(() => {
+    previewing.current = previewKey !== null;
+  });
+  const hasBoard = content !== null;
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!previewing.current || movedAt.current !== useStore.getState().game?.currentNode) return;
+      e.stopPropagation(); // not to the window, where it would step through the game
+      wheelPvDepth(e.deltaY, e.deltaMode, performance.now());
+    };
+    svg.addEventListener("wheel", onWheel, { passive: true });
+    return () => svg.removeEventListener("wheel", onWheel);
+  }, [hasBoard]);
+
+  if (!game || !content || !cn) return <div className="board-wrap" />;
+  const { layers, sx, sy, py, stoneGrid, endResult, nextPlayer } = content;
+  const pv: PvOverlay | null = hoverTarget ? { moves: hoverTarget.pv.slice(0, shown), startPlayer: nextPlayer } : null;
   const canPlay = !endResult && !(mode === MODE_PLAY && aiThinking) && !selecting && !setupTool;
   const ghostPlayer: Player | null = setupTool
     ? setupTool === "B" || setupTool === "W"
@@ -411,13 +458,14 @@ export function Board() {
           if (selecting && e.button === 0 && c) setBox([c[0], c[0], c[1], c[1]]);
           // middle click on a hint or next move: add its variation to the move tree
           // (use the event's position: `hover` can still hold the previous point if the mouse has just moved)
-          const target = e.button === 1 && c && hintTargets.find((h) => h.coords[0] === c[0] && h.coords[1] === c[1]);
-          if (target) {
+          const moves = e.button === 1 && c && !setupTool ? shownPv(c) : null;
+          if (moves) {
             e.preventDefault();
-            addPvToTree(target.pv);
+            addPvToTree(moves);
           }
         }}
         onMouseMove={(e) => {
+          movedAt.current = cn;
           const c = toBoard(e);
           if (c?.[0] !== hover?.[0] || c?.[1] !== hover?.[1]) setHover(c);
           if (selecting && box && c && (e.buttons & 1) !== 0) setBox([box[0], c[0], box[2], c[1]]);
@@ -436,16 +484,25 @@ export function Board() {
             return;
           }
           const c = toBoard(e);
+          // Shift+click on a hint or next move: add its variation (as much as is shown) to the move tree
+          const moves = e.shiftKey && c && !setupTool ? shownPv(c) : null;
           if (setupTool) {
             if (c) editAt(c);
-          } else if (c && canPlay && !stoneGrid[c[1]][c[0]]) playAt(c);
+          } else if (moves) addPvToTree(moves);
+          else if (c && canPlay && !stoneGrid[c[1]][c[0]]) playAt(c);
         }}
         onContextMenu={(e) => {
-          if (!setupTool) return;
-          // editing: the other color, or erase the markup
-          e.preventDefault();
           const c = toBoard(e);
-          if (c) editAt(c, true);
+          if (setupTool) {
+            // editing: the other color, or erase the markup
+            e.preventDefault();
+            if (c) editAt(c, true);
+            return;
+          }
+          const target = targetAt(c);
+          if (!c || !target) return;
+          e.preventDefault();
+          setBoardMenu({ x: e.clientX, y: e.clientY, coords: c, pv: target.pv, shown: shownPv(c)!.length });
         }}
       >
         <BoardDefs sx={sx} sy={sy} stones={stoneStyle} />
@@ -473,6 +530,54 @@ export function Board() {
           </g>
         )}
       </svg>
+      {pv && previewLength > 1 && (
+        <div className="pv-badge">
+          {tf("pv:shown", { shown, total: previewLength })}
+          <span className="pv-badge-hint">
+            {t("pv:hint-depth")}
+            {[key("pv-shorter"), key("pv-longer")].filter(Boolean).map((k) => (
+              <kbd key={k}>{k}</kbd>
+            ))}
+          </span>
+          <span className="pv-badge-hint">{t("pv:hint-add")}</span>
+        </div>
+      )}
+      {boardMenu && (
+        <ContextMenu x={boardMenu.x} y={boardMenu.y} onClose={closeBoardMenu}>
+          <button
+            className="menu-item"
+            onClick={() => {
+              addPvToTree(boardMenu.pv.slice(0, boardMenu.shown));
+              closeBoardMenu();
+            }}
+          >
+            <span>{boardMenu.shown === 1 ? t("pv:add-one") : tf("pv:add", { moves: boardMenu.shown })}</span>
+            <kbd>{t("pv:shift-click")}</kbd>
+          </button>
+          {boardMenu.shown < boardMenu.pv.length && (
+            <button
+              className="menu-item"
+              onClick={() => {
+                addPvToTree(boardMenu.pv);
+                closeBoardMenu();
+              }}
+            >
+              <span>{tf("pv:add", { moves: boardMenu.pv.length })}</span>
+            </button>
+          )}
+          {canPlay && !stoneGrid[boardMenu.coords[1]][boardMenu.coords[0]] && (
+            <button
+              className="menu-item"
+              onClick={() => {
+                playAt(boardMenu.coords);
+                closeBoardMenu();
+              }}
+            >
+              <span>{t("pv:play")}</span>
+            </button>
+          )}
+        </ContextMenu>
+      )}
     </div>
   );
 }
